@@ -3,7 +3,7 @@
 Six half marathons, one passport: Nicosia, Paphos, Limassol, Larnaka, Ayia Napa and one abroad.
 
 - Site: https://sdhnik.github.io/cyprus51/
-- Strava club: https://www.strava.com/clubs/2428585
+- Strava club: https://www.strava.com/clubs/cyprus51
 
 ## How it is built
 
