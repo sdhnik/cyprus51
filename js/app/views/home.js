@@ -36,7 +36,7 @@ export function home(root, { args } = {}) {
         <p class="home__note"><span aria-hidden="true">✳</span>5 CYPRUS RACES · 1 INTERNATIONAL</p>
       </div>
     </main>
-    <div class="c51-ticker home__ticker" aria-label="${esc(TICKER.join(', '))}"><div class="c51-ticker__track" aria-hidden="true">${TICKER.concat(TICKER).map((t) => `<span class="c51-ticker__item">${esc(t)}</span>`).join('')}</div></div>
+    <div class="c51-ticker home__ticker" aria-label="${esc(TICKER.join(', '))}"><div class="c51-ticker__track" aria-hidden="true"></div></div>
   </div>
   <dialog class="rules" aria-labelledby="rules-title"><div class="rules__box">
     <div class="rules__head">
@@ -50,6 +50,8 @@ export function home(root, { args } = {}) {
     </div>
   </div></dialog>`;
 
+  fillTicker(root.querySelector('.home__ticker .c51-ticker__track'));
+
   const dlg = root.querySelector('.rules');
   const open = () => { dlg.showModal(); dlg.querySelector('[data-close]').focus(); };
   root.querySelector('[data-rules]').addEventListener('click', open);
@@ -57,4 +59,27 @@ export function home(root, { args } = {}) {
   dlg.querySelector('[data-close-nav]').addEventListener('click', () => dlg.close());
   dlg.addEventListener('click', (e) => { if (e.target === dlg) dlg.close(); });   // click on the dimmed backdrop
   if (args?.[0] === 'rules') open();
+}
+
+// Endless ticker: one group of items is repeated until it is wider than the screen,
+// then the group is doubled and the track moves by exactly one group (-50%).
+// Speed stays the same on every screen width.
+function fillTicker(track) {
+  const item = (t) => `<span class="c51-ticker__item">${esc(t)}</span>`;
+  const build = () => {
+    track.innerHTML = TICKER.map(item).join('');
+    const one = track.scrollWidth || 1;
+    const reps = Math.max(1, Math.ceil((window.innerWidth + one) / one));
+    const group = Array.from({ length: reps }, () => TICKER.map(item).join('')).join('');
+    track.innerHTML = group + group;
+    track.style.animationDuration = `${Math.round((one * reps) / 70)}s`;   // ~70 px per second
+  };
+  build();
+  document.fonts?.ready.then(() => track.isConnected && build());   // re-measure with the real font
+  let w = window.innerWidth;
+  const onResize = () => {
+    if (!track.isConnected) return window.removeEventListener('resize', onResize);
+    if (window.innerWidth > w) { w = window.innerWidth; build(); }
+  };
+  window.addEventListener('resize', onResize);
 }
