@@ -1,0 +1,64 @@
+/* Cyprus 5+1 — generated from tokens.json */
+:root, [data-theme="light"] {
+  --orange-500: #ff633e;
+  --orange-700: #b83c20;
+  --orange-50: #fff0e9;
+  --ink: #0d1412;
+  --ivory: #f8f7f4;
+  --white: #ffffff;
+  --surface-soft: #f1f1ed;
+  --divider: #e4e5df;
+  --border-control: #868b86;
+  --border-field: #d3d5cf;
+  --text-secondary: #69716d;
+  --text-on-ink-muted: #a7a8a7;
+  --cyan: #00b8f0;
+  --verified: #11744a;
+  --verified-50: #e7f3ec;
+  --pending: #8f5300;
+  --pending-50: #fff5e8;
+  --error: #ad3426;
+  --error-50: #fff0ec;
+  --stamp-orange: #ff4823;
+  --stamp-blue: #0085da;
+  --stamp-ink: #35393a;
+  --stamp-locked: #919698;
+  --shadow-dialog: 0 24px 64px rgba(13,20,18,0.28);
+  --shadow-card: 0 1px 2px rgba(13,20,18,0.06);
+}
+:root {
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-32: 128px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 24px;
+  --radius-pill: 999px;
+  --control-height: 56px;
+  --tap-min: 44px;
+  --content-max: 1184px;
+  --form-max: 440px;
+  --dialog-max: 640px;
+  --font-poster: Anton, Impact, "Arial Narrow", sans-serif;
+  --font-display: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-sans: Inter, system-ui, sans-serif;
+}
+.display-hero { font-family: var(--font-poster); font-size: 232px; line-height: 1.0; font-weight: 400; }
+.display-1 { font-family: var(--font-poster); font-size: 88px; line-height: 1.0; font-weight: 400; }
+.heading-1 { font-family: var(--font-display); font-size: 44px; line-height: 1; font-weight: 700; }
+.heading-2 { font-family: var(--font-display); font-size: 28px; line-height: 1.05; font-weight: 700; }
+.numeral { font-family: var(--font-display); font-size: 64px; line-height: 1; font-weight: 700; }
+.lead { font-family: var(--font-sans); font-size: 20px; line-height: 1.5; font-weight: 400; }
+.body { font-family: var(--font-sans); font-size: 16px; line-height: 1.5; font-weight: 400; }
+.body-sm { font-family: var(--font-sans); font-size: 14px; line-height: 1.45; font-weight: 400; }
+.label { font-family: var(--font-sans); font-size: 13px; line-height: 1.3; font-weight: 600; letter-spacing: 0.08em; }
+.button { font-family: var(--font-sans); font-size: 15px; line-height: 1; font-weight: 700; letter-spacing: 0.02em; }
+.field-label { font-family: var(--font-sans); font-size: 14px; line-height: 1.3; font-weight: 600; }

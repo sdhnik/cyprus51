@@ -1,0 +1,59 @@
+{
+  "season": 2027,
+  "races": [
+    {
+      "id": "nicosia-2027",
+      "city": "Nicosia",
+      "officialName": "Bank of Cyprus Nicosia Marathon — Half Marathon",
+      "date": "2027-01-24",
+      "website": "https://nicosiamarathon.com/race/21k-half-marathon/",
+      "gpx": "gpx/nicosia-2027.gpx",
+      "stamp": "nicosia",
+      "startFinish": "City centre",
+      "course": "City loop"
+    },
+    {
+      "id": "paphos-2027",
+      "city": "Paphos",
+      "officialName": "TUI Cyprus Marathon — Half Marathon",
+      "date": "2027-02-28",
+      "website": "https://cyprusmarathon.com/half-marathon/",
+      "gpx": "gpx/paphos-2027.gpx",
+      "stamp": "paphos"
+    },
+    {
+      "id": "limassol-2027",
+      "city": "Limassol",
+      "officialName": "XM Limassol Marathon — MUSKITA Half Marathon",
+      "date": "2027-04-04",
+      "website": "https://www.limassolmarathon.com/index.php?pageid=172",
+      "gpx": "gpx/limassol-2027.gpx",
+      "stamp": "limassol"
+    },
+    {
+      "id": "larnaka-2027",
+      "city": "Larnaka",
+      "officialName": "Radisson Hotels Larnaka Marathon — Half Marathon",
+      "date": "2027-11",
+      "website": "https://larnakamarathon.com/race/21k-half-marathon/",
+      "gpx": "gpx/larnaka-2027.gpx",
+      "stamp": "larnaka",
+      "startFinish": "Finikoudes",
+      "course": "Seafront"
+    },
+    {
+      "id": "ayia-napa-2027",
+      "city": "Ayia Napa",
+      "officialName": "Ayia Napa Half Marathon",
+      "date": "2027-12",
+      "website": "https://nireastriathlon.com/ayia-napa-half-marathon/",
+      "gpx": "gpx/ayia-napa-2027.gpx",
+      "stamp": "ayia-napa"
+    }
+  ],
+  "abroad": {
+    "id": "abroad-2027",
+    "stamp": "international",
+    "note": "Any official half marathon outside Cyprus during the season. The runner uploads the race GPX."
+  }
+}
