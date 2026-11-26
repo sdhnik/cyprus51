@@ -237,7 +237,7 @@ h1:focus { outline: none; }
 .home__head { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px clamp(20px, 6vw, 96px); position: relative; z-index: 3; }
 .home__head .wordmark { font-size: 32px; letter-spacing: -0.01em; }
 .home__nav { display: flex; gap: 12px; align-items: center; }
-.home__main { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: row-reverse; flex-wrap: wrap-reverse; align-items: stretch; padding: 0 0 0 clamp(20px, 6vw, 96px); }
+.home__main { flex: 1; min-height: 0; position: relative; display: flex; flex-direction: row-reverse; flex-wrap: nowrap; align-items: stretch; overflow: hidden; padding: 0 0 0 clamp(20px, 6vw, 96px); }
 .home__copy { flex: 1 1 560px; min-width: 0; position: relative; z-index: 2; display: flex; flex-direction: column; justify-content: safe center; gap: clamp(12px, 2.6vh, 28px); padding: clamp(16px, 5vh, 72px) 0 clamp(16px, 4vh, 64px); }
 .home__eyebrow { margin: 0; font-size: 14px; font-weight: 600; letter-spacing: .18em; color: var(--orange-700); }
 .home__title { margin: 0; font: 400 clamp(56px, min(12vw, 15vh), 190px)/1 var(--font-poster); letter-spacing: -0.005em; text-transform: uppercase; }
