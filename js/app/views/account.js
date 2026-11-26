@@ -73,7 +73,7 @@ export async function account(root, { state, flash }) {
       const { error } = await sb.rpc('delete_my_account');
       if (error) { done(); f.insertAdjacentHTML('afterbegin', banner('error', '', 'Could not delete the account. Try again in a minute.')); return; }
       await sb.auth.signOut({ scope: 'local' });
-      go('login');
+      go('');
     });
   });
 }

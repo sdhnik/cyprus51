@@ -65,8 +65,8 @@ export async function passport(root, { state, flash }) {
   else if (nV === 0 && nextDays != null) chips.push(nextDays === 0 ? 'First race today' : `First race in ${plural(nextDays, 'day')}`);
   chips.push(`${plural(daysLeft, 'day')} left in season`);
   const stats = [
-    { label: 'Personal best', value: pb ? fmtTime(pb.s.official_time_s) : '—', note: pb ? pb.r.city : 'not set yet' },
-    { label: 'Average pace', value: avg ? pace(avg) : '—', note: 'min per km' },
+    { label: 'Best time', value: pb ? fmtTime(pb.s.official_time_s) : '—', note: pb ? pb.r.city : 'not set yet' },
+    { label: 'Avg pace', value: avg ? pace(avg) : '—', note: 'min per km' },
     { label: 'Distance', value: (HALF_KM * nV).toFixed(1).replace(/\.0$/, nV ? '.0' : ''), note: 'km verified' },
     { label: 'On course', value: fmtTime(times.reduce((a, b) => a + b, 0)) || '0:00', note: plural(nV, 'race') },
   ];
@@ -222,20 +222,27 @@ export async function passport(root, { state, flash }) {
     <div class="ps-row">${results}${community || ''}</div>
     ${awards}`);
 
-  // Challenge carousel
+  // Challenge carousel: every slide sits in the same grid cell, so the card keeps
+  // the height of the tallest one and nothing jumps when switching.
   if (CH.length) {
     let i = 0;
     const card = root.querySelector('.ps-ch');
-    const show = () => {
-      const ch = CH[i];
-      card.querySelector('[data-ch="kind"]').textContent = ch.kind;
-      card.querySelector('[data-ch="body"]').innerHTML = `
-        <div class="ps-ch__top"><div class="ps-ch__title"><span class="ps-ch__icon">${svgIcon(ch.icon, 28)}</span><h2 id="goal-title" class="h2">${esc(ch.title)}</h2></div><p class="ps-ch__text">${esc(ch.text)}</p></div>
+    const body = card.querySelector('[data-ch="body"]');
+    body.innerHTML = CH.map((ch, n) => `<div class="ps-ch__slide" data-slide="${n}">
+        <div class="ps-ch__top"><div class="ps-ch__title"><span class="ps-ch__icon">${svgIcon(ch.icon, 28)}</span><h2 class="h2"${n === 0 ? ' id="goal-title"' : ''}>${esc(ch.title)}</h2></div><p class="ps-ch__text">${esc(ch.text)}</p></div>
         <div class="ps-ch__result">
           ${ch.progress ? progress(ch.progress[0], ch.progress[1], ch.progress[2], ch.title) : ''}
           ${ch.target ? `<div class="ps-ch__target"><div><p class="ps-ch__tlabel">${esc(ch.tlabel)}</p><p class="num ps-ch__tvalue${ch.small ? ' is-small' : ''}">${esc(ch.target)}</p></div>${ch.cta ? `<a href="${ch.cta}" class="ps-ch__cta" aria-label="Plan ${esc(nextName)} with this target" title="Plan this race">${svgIcon(ICON.arrow, 20)}</a>` : ''}</div>` : ''}
           ${ch.unlock ? `<div class="ps-ch__unlock"><img src="${ch.unlockImg}" alt=""><p><span>Unlocks</span> <strong>${esc(ch.unlock)}</strong></p></div>` : ''}
-        </div>`;
+        </div></div>`).join('');
+    const show = () => {
+      card.querySelector('[data-ch="kind"]').textContent = CH[i].kind;
+      body.querySelectorAll('[data-slide]').forEach((el, n) => {
+        const on = n === i;
+        el.classList.toggle('is-on', on);
+        el.setAttribute('aria-hidden', String(!on));
+        el.inert = !on;
+      });
       card.querySelectorAll('[data-ch-go]').forEach((b, n) => { b.setAttribute('aria-current', String(n === i)); b.classList.toggle('is-on', n === i); });
     };
     card.querySelector('[data-ch="next"]').addEventListener('click', () => { i = (i + 1) % CH.length; show(); });

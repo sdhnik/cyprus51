@@ -45,7 +45,7 @@ async function start() {
   sb.auth.onAuthStateChange((event, session) => {
     state.session = session;
     if (event === 'PASSWORD_RECOVERY') recovery = true;
-    if (event === 'SIGNED_OUT') { state.profile = null; go('login'); }
+    if (event === 'SIGNED_OUT') { state.profile = null; go(''); }
   });
 
   const { data } = await sb.auth.getSession();   // also finishes the login from an email link
