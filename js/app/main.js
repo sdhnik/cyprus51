@@ -3,7 +3,7 @@ import { route, onRender, render, go, takeFlash } from './router.js';
 import * as auth from './views/auth.js';
 import { passport } from './views/passport.js';
 import { account } from './views/account.js';
-import { banner } from './ui.js';
+import { banner, esc } from './ui.js';
 import { state, loadProfile } from './state.js';
 
 const root = document.getElementById('app');
@@ -28,7 +28,7 @@ onRender(async (name, r, args) => {
     await r.view(root, { args, state, flash });
   } catch (e) {
     console.error(e);
-    root.innerHTML = `<main class="page-error" id="main">${banner('error', 'Something went wrong on our side', 'Nothing is lost. Reload the page, or try again in a minute.')}<button class="c51-btn c51-btn--secondary" onclick="location.reload()">Reload</button></main>`;
+    root.innerHTML = `<main class="page-error" id="main">${banner('error', 'Something went wrong on our side', 'Nothing is lost. Reload the page, or try again in a minute.')}<p class="muted">Details: ${esc(e?.message || e)}</p><button class="c51-btn c51-btn--secondary" onclick="location.reload()">Reload</button></main>`;
   }
   const h1 = root.querySelector('h1');
   if (h1) { h1.tabIndex = -1; document.title = `${h1.textContent.trim()} · Cyprus 5+1`; }

@@ -164,9 +164,13 @@ create policy "profiles: update own"
   on public.profiles for update to authenticated
   using (id = auth.uid()) with check (id = auth.uid());
 
+-- Table access for the API (RLS above still decides which rows).
 -- Runners may only change their display name, never is_admin.
-revoke update on public.profiles from authenticated, anon;
+revoke all on public.profiles, public.submissions from anon;
+revoke update on public.profiles from authenticated;
+grant  select on public.profiles to authenticated;
 grant  update (display_name) on public.profiles to authenticated;
+grant  select, insert, update, delete on public.submissions to authenticated;
 
 create policy "submissions: read own, admin reads all"
   on public.submissions for select to authenticated
