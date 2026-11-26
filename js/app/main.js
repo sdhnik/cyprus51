@@ -3,11 +3,14 @@ import { route, onRender, render, go, takeFlash } from './router.js';
 import * as auth from './views/auth.js';
 import { passport } from './views/passport.js';
 import { account } from './views/account.js';
+import { home } from './views/home.js';
 import { banner, esc } from './ui.js';
 import { state, loadProfile } from './state.js';
 
 const root = document.getElementById('app');
 
+route('', home, { guest: true });
+route('rules', (root, o) => home(root, { ...o, args: ['rules'] }), { guest: true });
 route('login', auth.login, { guest: true });
 route('join', auth.join, { guest: true });
 route('forgot', auth.forgot, { guest: true });
@@ -19,7 +22,7 @@ route('account', account, { user: true });
 onRender(async (name, r, args) => {
   state.session = (await sb.auth.getSession()).data.session;   // local read, no network
   if (state.session && !state.profile) await loadProfile();
-  if (!r) return go(state.session ? 'passport' : 'login');
+  if (!r) return go(state.session ? 'passport' : '');
   if (r.user && !state.session) return go('login');
   if (r.guest && state.session && name !== 'link-problem') return go('passport');
   window.scrollTo(0, 0);

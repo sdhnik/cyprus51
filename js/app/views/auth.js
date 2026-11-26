@@ -10,8 +10,8 @@ function shell({ eyebrow, title, lead, body, foot = '' }) {
   return `<div class="auth">
     <div class="auth__main">
       <header class="auth__head">
-        <a class="wordmark" href="${asset('')}">CYPRUS <span>5+1</span></a>
-        <a class="auth__home" href="${asset('')}">${icon('back')}Home</a>
+        <a class="wordmark" href="#/">CYPRUS <span>5+1</span></a>
+        <a class="auth__home" href="#/">${icon('back')}Home</a>
       </header>
       <main class="auth__body" id="main">
         <div class="auth__inner">
