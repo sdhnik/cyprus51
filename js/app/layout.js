@@ -10,7 +10,6 @@ export function appShell(content) {
     <header class="app__head">
       <a class="wordmark" href="#/passport">CYPRUS <span>5+1</span></a>
       <nav class="app__nav">
-        ${state.profile?.is_admin ? `<a class="app__link" href="#/admin">Review</a>` : ''}
         <a class="avatar" href="#/account" aria-label="Account for ${esc(name)}">${esc(initials(name))}</a>
       </nav>
     </header>

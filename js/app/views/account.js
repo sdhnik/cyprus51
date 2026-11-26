@@ -19,6 +19,11 @@ export async function account(root, { state, flash }) {
           <button class="c51-btn c51-btn--dark" type="submit">Save changes</button>
         </form>
       </section>
+      ${state.profile?.is_admin ? `<section class="card" aria-labelledby="adm-title">
+        <h2 id="adm-title" class="h2">Review results</h2>
+        <p class="muted">Check submitted results against the official results and verify or reject them.</p>
+        <a class="c51-btn c51-btn--dark" href="#/admin">Open review queue ${icon('arrow')}</a>
+      </section>` : ''}
       <section class="card" aria-labelledby="sess-title">
         <h2 id="sess-title" class="h2">Session</h2>
         <p class="muted">You stay logged in on this device until you log out.</p>
