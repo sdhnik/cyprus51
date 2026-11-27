@@ -8,6 +8,7 @@ import { loadSeason, HALF_KM, SUB130, badgeImg } from '../model.js';
 import { planCourse, openAbroad } from '../abroad.js';
 import { combobox, countryNames } from '../combobox.js';
 import { routeSvg, elevationSvg } from '../course.js';
+import { routeMap } from '../map.js';
 import { compressPhoto, photoError, uploadPhoto, photoUrl, removePhoto, toDataUrl } from '../photo.js';
 import { enqueue, queued, isOffline, flush } from '../outbox.js';
 import { go, render } from '../router.js';
@@ -175,11 +176,17 @@ export async function race(root, { state, args, flash }) {
     }
     const raw = c.pts.map((p) => p[2]);
     const hi = Math.round(Math.max(...raw)), lo = Math.round(Math.min(...raw));
-    box.innerHTML = `${routeSvg(c, `Course map of ${esc(x.name)}`)}
+    box.innerHTML = `<div class="rc-mapbox" data-map>${routeSvg(c, `Course map of ${esc(x.name)}`)}</div>
       <div class="rc-legend"><span><i class="rc-legend__line"></i>Route</span><span><i class="rc-legend__km">5</i>Kilometre marks</span></div>
       <div class="rc-sec"><p class="lbl">Elevation, metres</p>${elevationSvg(c, `Elevation profile: ${lo} to ${hi} metres, ${c.gain} metres of climbing`)}</div>
       <div class="rc-sec rc-facts rc-facts--3">${fact('Distance', '21.1 km')}${fact('Elevation gain', `${c.gain} m`)}${fact('Highest point', `${hi} m`)}${fact('Lowest point', `${lo} m`)}
-        ${x.abroad ? fact('Country', x.sub?.abroad_country || x.plan?.country || '—') : fact('Start & finish', r.startFinish || '—')}${x.abroad ? '' : fact('Course', r.course || '—')}</div>`;
+        ${x.abroad ? fact('Country', x.sub?.abroad_country || x.plan?.country || '—') : (r.startFinish ? fact('Start & finish', r.startFinish) : '') + (r.course ? fact('Course', r.course) : '')}</div>`;
+    // Swap the drawing for the real map once Leaflet is loaded; keep the drawing if it can't load.
+    const mapEl = box.querySelector('[data-map]');
+    const live = document.createElement('div');
+    live.className = 'rc-live';
+    mapEl.appendChild(live);
+    routeMap(live, c, `Course map of ${x.name}`).then(() => mapEl.classList.add('is-live')).catch(() => live.remove());
   }).catch(() => { const b = root.querySelector('[data-course]'); if (b) b.innerHTML = `<p class="rc-p">The course could not be loaded. Try again later.</p>`; });
 }
 

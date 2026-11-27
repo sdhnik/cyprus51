@@ -1,4 +1,5 @@
 // Everything the passport and the achievement pages know about a runner's season.
+import { today } from './state.js';
 import { sb } from './supa.js';
 import { loadRaces, raceDate, daysUntil, fmtTime, asset } from './data.js';
 
@@ -14,7 +15,7 @@ export async function loadSeason() {
     sb.from('abroad_plans').select('*').maybeSingle(),
   ]);
   if (subsRes.error) throw subsRes.error;
-  return model(data, subsRes.data, commRes.error ? null : commRes.data, planRes.error ? null : planRes.data);
+  return model(data, subsRes.data, commRes.error ? null : commRes.data, planRes.error ? null : planRes.data, today());
 }
 
 export function model(data, rows, community, plan = null, now = new Date()) {

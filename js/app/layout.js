@@ -26,6 +26,7 @@ export function appShell(content) {
         </div>
       </div>
     </header>
+    ${state.profile?.test_today ? `<p class="testbar" role="status"><b>Test account</b> · today is ${new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }).format(new Date(state.profile.test_today + 'T12:00:00')).replace(',', '')} · not counted in stats</p>` : ''}
     <main class="app__main" id="main">${content}</main>
     <footer class="app__foot">
       <span>Cyprus 5+1 · ${SEASON}</span>
