@@ -512,7 +512,8 @@ h1:focus { outline: none; }
 @media (max-width: 560px) { .gpxpick__box { flex-wrap: wrap; } .gpxpick__txt { flex: 1 1 calc(100% - 56px); } .gpxpick__btn { margin-left: 52px; } }
 
 /* Sticky header: a full-width page-coloured strip behind it; a hairline once the page scrolls */
-.app__head { position: sticky; top: 0; z-index: 30; }
+.app__head { position: sticky; top: 6px; z-index: 30; }
+.app__head::after { content: ""; position: absolute; z-index: -1; top: -6px; left: 50%; width: 100vw; height: 6px; transform: translateX(-50%); background: var(--orange-500); }
 .app__head::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: 50%; width: 100vw; transform: translateX(-50%); background: var(--ivory); border-bottom: 1px solid transparent; transition: border-color .2s; }
 .app__head.is-stuck::before { border-bottom-color: rgba(13,20,18,.08); }
 html { scroll-padding-top: 96px; }
