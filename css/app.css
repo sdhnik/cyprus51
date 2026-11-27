@@ -745,3 +745,6 @@ html { scroll-padding-top: 110px; }
 .rc-pin--end { width: 30px; height: 30px; background: var(--ink); color: #fff; font-size: 9.5px; box-shadow: 0 0 0 2px #fff; }
 .testbar { width: 100%; max-width: var(--content-max); margin: 0 auto 8px; padding: 8px clamp(20px, 4vw, 48px); box-sizing: border-box; font-size: 13px; color: #8a4a00; }
 .testbar b { padding: 2px 8px; border-radius: 999px; background: #ffe7c2; color: #8a4a00; }
+.home__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.home__strava { text-transform: none; letter-spacing: 0; }
+@media (max-width: 900px) { .home__actions { flex-direction: column; gap: 10px; } .home__strava { width: 100%; min-height: 48px; } }
