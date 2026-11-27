@@ -15,7 +15,6 @@ export async function account(root, { state, flash, args }) {
     <div class="acc">
       <nav class="acc__nav" aria-label="Account sections">
         ${SECTIONS.slice(0, 2).map(([id, label]) => `<a href="#/account/${id}" data-sec="${id}">${label}</a>`).join('')}
-        <button type="button" data-open-rules>Rules</button>
         ${state.profile?.is_admin ? `<a href="#/admin">Review results</a>` : ''}
         <a href="#/account/delete" data-sec="delete" class="is-danger">Delete account</a>
         <button type="button" class="acc__logout" data-logout>Log out</button>

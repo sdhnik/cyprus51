@@ -7,19 +7,20 @@ export const SUB130 = 90 * 60;
 export const badgeImg = (slug, earned) => asset(`assets/achievements/${slug}-${earned ? 'earned' : 'locked'}.webp`);
 
 export async function loadSeason() {
-  const [data, subsRes, commRes] = await Promise.all([
+  const [data, subsRes, commRes, planRes] = await Promise.all([
     loadRaces(),
     sb.from('submissions').select('race_id, status, watch_time_s, official_time_s, place, place_of'),
     sb.rpc('community_stats'),
+    sb.from('abroad_plans').select('*').maybeSingle(),
   ]);
   if (subsRes.error) throw subsRes.error;
-  return model(data, subsRes.data, commRes.error ? null : commRes.data);
+  return model(data, subsRes.data, commRes.error ? null : commRes.data, planRes.error ? null : planRes.data);
 }
 
-export function model(data, rows, community, now = new Date()) {
+export function model(data, rows, community, plan = null, now = new Date()) {
   const subs = new Map(rows.map((s) => [s.race_id, s]));
   const cyprus = data.races;
-  const abroad = { ...data.abroad, city: 'International', abroad: true };
+  const abroad = { ...data.abroad, city: 'International', abroad: true, plan };
   const races = [...cyprus, abroad];
   const isV = (r) => subs.get(r.id)?.status === 'verified';
   const verified = races.filter(isV).map((r) => ({ r, s: subs.get(r.id) }));
@@ -52,5 +53,5 @@ export function model(data, rows, community, now = new Date()) {
   ];
   badges.forEach((b) => { b.earned = b.v >= b.max; b.img = badgeImg(b.slug, b.earned); });
 
-  return { data, subs, cyprus, abroad, races, isV, verified, nV, nCyprusV, nReview, times, pb, avg, next, nextDays, seasonStart, abroadDone, badges, community, now };
+  return { data, plan, subs, cyprus, abroad, races, isV, verified, nV, nCyprusV, nReview, times, pb, avg, next, nextDays, seasonStart, abroadDone, badges, community, now };
 }

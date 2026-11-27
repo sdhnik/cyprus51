@@ -3,7 +3,11 @@ import { appShell } from '../layout.js';
 import { esc, icon } from '../ui.js';
 import { raceDate, formatRaceDate, daysUntil, checkInOpen, seasonEnd, stampImg, course, profilePath, fmtTime, asset } from '../data.js';
 import { loadSeason, HALF_KM, SUB130, badgeImg } from '../model.js';
+import { openAbroad } from '../abroad.js';
+import { render } from '../router.js';
 
+const dayShort = (iso) => new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso + 'T00:00:00')).replace(',', '');
+const dayLong = (iso) => new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso + 'T00:00:00'));
 const plural = (n, one, many = one + 's') => `${n.toLocaleString('en-GB')} ${n === 1 ? one : many}`;
 const pace = (sec) => fmtTime(Math.round(sec / HALF_KM));
 
@@ -32,7 +36,7 @@ export async function passport(root, { state, flash }) {
   root.innerHTML = appShell(`<div aria-busy="true" role="status"><span class="sr">Loading your passport…</span><div class="sk sk--hero"></div><div class="sk sk--card"></div></div>`);
 
   const m = await loadSeason();
-  const { data, subs, races, cyprus, isV, verified, nV, nCyprusV, nReview, times, pb, avg, next, nextDays, seasonStart, abroadDone } = m;
+  const { data, plan, subs, races, cyprus, isV, verified, nV, nCyprusV, nReview, times, pb, avg, next, nextDays, seasonStart, abroadDone } = m;
   const now = m.now;
   const daysLeft = Math.max(0, daysUntil(seasonEnd(data), now));
   const raceDay = cyprus.find((r) => checkInOpen(r, now) && !subs.has(r.id));
@@ -111,7 +115,12 @@ export async function passport(root, { state, flash }) {
     if (pb.s.official_time_s > SUB130) CH.push({ kind: 'Achievement', icon: ICON.bolt, title: 'Break 1:30', text: `Your best is ${fmtTime(pb.s.official_time_s)}. Any half marathon counts, home or abroad.`, tlabel: 'Time to cut', target: fmtTime(pb.s.official_time_s - SUB130 + 1), unlock: 'Sub 1:30 Elite', unlockImg: badgeImg('sub-1-30-elite', true) });
     if (nV >= 2 && next) CH.push({ kind: 'Consistency', icon: ICON.target, title: 'Consistent finish', text: `Finish ${nextName} within 3 minutes of your average, ${fmtTime(avg)}.`, tlabel: 'Finish window', target: `${fmtTime(avg - 180)} – ${fmtTime(avg + 180)}`, small: true, cta: `#/race/${next.id}` });
   }
-  if (!abroadDone) CH.push({ kind: 'Achievement', icon: ICON.globe, title: 'Run one abroad', text: `Any official half marathon abroad in ${data.season} counts as your sixth stamp.`, unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) });
+  if (!abroadDone) {
+    const planDays = plan ? daysUntil(new Date(plan.race_date + 'T00:00:00'), now) : null;
+    CH.push(plan
+      ? { kind: 'Race abroad', icon: ICON.globe, title: `Run ${plan.race_name}`, text: `${plan.country} · ${dayLong(plan.race_date)}. Your sixth stamp. Check in at the finish like any other race.`, tlabel: planDays > 0 ? 'Days to race' : 'Race day', target: planDays > 0 ? String(planDays) : dayShort(plan.race_date).toUpperCase(), action: 'Edit race', unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) }
+      : { kind: 'Race abroad', icon: ICON.globe, title: 'Add your race abroad', text: `Already entered a half marathon outside Cyprus? Add it to your ${data.season} calendar and we’ll count down to it.`, action: 'Add race abroad', unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) });
+  }
 
   const challengeCard = CH.length ? `<section class="card ps-ch" aria-labelledby="goal-title">
     <div class="ps-ch__head"><p class="lbl">A challenge for you</p><span class="ps-ch__kind" data-ch="kind"></span></div>
@@ -127,10 +136,10 @@ export async function passport(root, { state, flash }) {
     const s = subs.get(r.id);
     const st = s ? s.status : 'none';
     const isNext = next && r.id === next.id;
-    const detail = st === 'verified' ? fmtTime(s.official_time_s) : st === 'pending' ? 'In review' : st === 'checked_in' ? fmtTime(s.watch_time_s) : st === 'rejected' ? 'Fix result' : isNext ? 'Next up' : '—';
+    const detail = st === 'verified' ? fmtTime(s.official_time_s) : st === 'pending' ? 'In review' : st === 'checked_in' ? fmtTime(s.watch_time_s) : st === 'rejected' ? 'Fix result' : isNext ? 'Next up' : r.abroad && plan ? 'Planned' : '—';
     const img = stampImg(r.stamp, st === 'verified' || st === 'pending');
     const op = st === 'pending' ? .45 : 1;
-    return { r, st, detail, img, op, date: r.abroad ? 'Any race abroad' : formatRaceDate(r), href: r.abroad ? '#/race/abroad' : `#/race/${r.id}` };
+    return { r, st, detail, img, op, date: r.abroad ? (plan ? `${dayShort(plan.race_date)} · ${plan.country}` : 'Any race abroad') : formatRaceDate(r), href: r.abroad ? '#/race/abroad' : `#/race/${r.id}` };
   });
   const season = `<section class="card ps-season" aria-labelledby="season-title">
     <div class="ps-head"><h2 id="season-title" class="h2">Season ${data.season}</h2><p class="ps-head__note">Select a race for course, target time and your result</p></div>
@@ -214,6 +223,7 @@ export async function passport(root, { state, flash }) {
         <div class="ps-ch__result">
           ${ch.progress ? progress(ch.progress[0], ch.progress[1], ch.progress[2], ch.title) : ''}
           ${ch.target ? `<div class="ps-ch__target"><div><p class="ps-ch__tlabel">${esc(ch.tlabel)}</p><p class="num ps-ch__tvalue${ch.small ? ' is-small' : ''}">${esc(ch.target)}</p></div>${ch.cta ? `<a href="${ch.cta}" class="ps-ch__cta" aria-label="Plan ${esc(nextName)} with this target" title="Plan this race">${svgIcon(ICON.arrow, 20)}</a>` : ''}</div>` : ''}
+          ${ch.action ? `<div><button type="button" class="c51-btn c51-btn--dark c51-btn--sm ps-ch__action" data-abroad>${esc(ch.action)}</button></div>` : ''}
           ${ch.unlock ? `<div class="ps-ch__unlock"><img src="${ch.unlockImg}" alt=""><p><span>Unlocks</span> <strong>${esc(ch.unlock)}</strong></p></div>` : ''}
         </div></div>`).join('');
     const show = () => {
@@ -231,6 +241,9 @@ export async function passport(root, { state, flash }) {
     card.querySelector('.ps-ch__foot').hidden = CH.length < 2;
     show();
   }
+
+  // Race abroad dialog
+  root.querySelectorAll('[data-abroad]').forEach((b) => b.addEventListener('click', () => openAbroad(plan, () => render())));
 
   // Invite a friend
   root.querySelector('[data-invite]')?.addEventListener('click', async (e) => {
@@ -261,7 +274,7 @@ function chart(races, subs, pb, W, H) {
   const step = (x1 - x0) / races.length;
   const X = (i) => x0 + step * (i + 0.5);
   const short = (r) => (r.abroad ? (narrow ? 'Intl.' : 'International') : narrow && r.city === 'Ayia Napa' ? 'A. Napa' : r.city);
-  const sub = (r) => (r.abroad ? 'Any' : raceDate(r).tbc ? formatRaceDate(r).split(',')[0] : formatRaceDate(r).replace(/^\w+ /, ''));
+  const sub = (r) => (r.abroad ? (r.plan ? dayShort(r.plan.race_date).replace(/^\w+ /, '') : 'Any') : raceDate(r).tbc ? formatRaceDate(r).split(',')[0] : formatRaceDate(r).replace(/^\w+ /, ''));
   const labels = races.map((r, i) => `<text x="${X(i).toFixed(1)}" y="${y1 + 20}" text-anchor="middle" font-size="${narrow ? 9.5 : 12}" font-weight="600" fill="#0d1412">${esc(short(r))}</text><text x="${X(i).toFixed(1)}" y="${y1 + 36}" text-anchor="middle" font-size="${narrow ? 9.5 : 11}" fill="#69716d">${esc(sub(r))}</text>`).join('');
   const pts = races.map((r, i) => ({ i, s: subs.get(r.id) })).filter((p) => p.s?.status === 'verified');
 

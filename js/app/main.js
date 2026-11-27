@@ -5,10 +5,30 @@ import { passport } from './views/passport.js';
 import { account } from './views/account.js';
 import { home } from './views/home.js';
 import { achievement } from './views/achievement.js';
+import { admin } from './views/admin.js';
 import { banner, esc } from './ui.js';
 import { state, loadProfile } from './state.js';
 
 const root = document.getElementById('app');
+
+// Browser tab titles: page first, site name last.
+const BADGES = { 'personal-best': 'Personal Best', '5-cities-finisher': '5 Cities Finisher', 'international-finisher': 'International Finisher', '5plus1-finisher': '5+1 Finisher', 'sub-1-30-elite': 'Sub 1:30 Elite' };
+function pageTitle(name, args = []) {
+  const t = {
+    '': 'Cyprus 5+1 · Running passport for Cyprus half marathons',
+    rules: 'Rules · Cyprus 5+1',
+    login: 'Log in · Cyprus 5+1',
+    'link-problem': 'Log in · Cyprus 5+1',
+    join: 'Join the challenge · Cyprus 5+1',
+    forgot: 'Reset your password · Cyprus 5+1',
+    reset: 'Set a new password · Cyprus 5+1',
+    passport: 'Your passport · Cyprus 5+1',
+    account: 'Account · Cyprus 5+1',
+    achievement: `${BADGES[args[0]] || 'Achievement'} · Achievements · Cyprus 5+1`,
+    admin: 'Review queue · Cyprus 5+1',
+  }[name];
+  return document.querySelector('.page-error') ? 'Something went wrong · Cyprus 5+1' : (t || 'Cyprus 5+1');
+}
 
 route('', home, { guest: true });
 route('rules', (root, o) => home(root, { ...o, args: ['rules'] }), { guest: true });
@@ -20,6 +40,7 @@ route('link-problem', auth.linkProblem, { guest: true });
 route('passport', passport, { user: true });
 route('account', account, { user: true });
 route('achievement', achievement, { user: true });
+route('admin', admin, { user: true });
 
 onRender(async (name, r, args) => {
   state.session = (await sb.auth.getSession()).data.session;   // local read, no network
@@ -36,7 +57,8 @@ onRender(async (name, r, args) => {
     root.innerHTML = `<main class="page-error" id="main">${banner('error', 'Something went wrong on our side', 'Nothing is lost. Reload the page, or try again in a minute.')}<details class="err-details"><summary>Technical details</summary><p>${esc(e?.message || e)}</p></details><button class="c51-btn c51-btn--secondary" onclick="location.reload()">Reload</button></main>`;
   }
   const h1 = root.querySelector('h1');
-  if (h1) { h1.tabIndex = -1; document.title = `${h1.textContent.trim()} · Cyprus 5+1`; }
+  if (h1) h1.tabIndex = -1;
+  document.title = pageTitle(name, args);
 });
 
 async function start() {
