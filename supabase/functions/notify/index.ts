@@ -22,8 +22,11 @@ const json = (data: unknown, status = 200) => new Response(JSON.stringify(data),
 
 Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'POST only' }, 405);
-  const secret = Deno.env.get('NOTIFY_SECRET');
-  if (!secret || req.headers.get('x-notify-secret') !== secret) return json({ error: 'unauthorized' }, 401);
+  const secret = (Deno.env.get('NOTIFY_SECRET') ?? '').trim();
+  const given = (req.headers.get('x-notify-secret') ?? '').trim();
+  if (!secret) return json({ error: 'NOTIFY_SECRET is not set in Edge Functions → Secrets' }, 500);
+  if (!given) return json({ error: 'header x-notify-secret is missing' }, 401);
+  if (given !== secret) return json({ error: `x-notify-secret does not match NOTIFY_SECRET (header has ${given.length} characters, secret has ${secret.length})` }, 401);
   const body = await req.json().catch(() => ({}));
   try {
     if (body.kind === 'review') return json(await review(body.submission_id));
