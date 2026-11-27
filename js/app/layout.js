@@ -1,4 +1,4 @@
-import { esc, initials } from './ui.js';
+import { esc, initials, stravaMark } from './ui.js';
 import { asset } from './data.js';
 import { state } from './state.js';
 import { sb } from './supa.js';
@@ -30,7 +30,7 @@ export function appShell(content) {
     <main class="app__main" id="main">${content}</main>
     <footer class="app__foot">
       <span>Cyprus 5+1 · ${SEASON}</span>
-      <nav aria-label="Rules and legal"><button type="button" data-open-rules>Rules</button><a href="${asset('legal/terms.html')}">Terms</a><a href="${asset('legal/privacy.html')}">Privacy Policy</a><a href="${STRAVA_CLUB_URL}" target="_blank" rel="noopener" class="app__strava"><b class="strava-word">Strava</b>&nbsp;club</a></nav>
+      <nav aria-label="Rules and legal"><button type="button" data-open-rules>Rules</button><a href="${asset('legal/terms.html')}">Terms</a><a href="${asset('legal/privacy.html')}">Privacy Policy</a><a href="${STRAVA_CLUB_URL}" target="_blank" rel="noopener" class="app__strava">${stravaMark()}<span>club</span></a></nav>
     </footer>
   </div>`;
 }

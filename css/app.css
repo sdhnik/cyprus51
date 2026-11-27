@@ -765,3 +765,8 @@ html { scroll-padding-top: 110px; }
 @media (max-width: 420px) { .ps-com__btns { grid-template-columns: 1fr; } }
 .ps-com .ps-com__btns { margin-top: auto; }
 .ps-com .ps-com__btns .c51-btn { margin-top: 0; }
+.strava-logo { display: inline-block; height: .8em; width: auto; vertical-align: -0.05em; }
+.strava-link { gap: 6px; }
+.app__foot .app__strava { display: inline-flex; align-items: center; gap: 5px; }
+.app__foot .app__strava .strava-logo { height: 10px; }
+.home__strava { gap: 6px; }

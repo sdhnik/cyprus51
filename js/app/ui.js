@@ -89,7 +89,7 @@ export function wireTime(input) {
   });
 }
 
-// Link to the Cyprus 5+1 club on Strava. "Strava" in Strava orange and bold, as their guidelines ask
-// for links to Strava; an official Strava logo file can replace the word later.
+// Link to the Cyprus 5+1 club on Strava, with the official Strava wordmark.
+export const stravaMark = () => `<img class="strava-logo" src="${new URL('../../assets/brand/strava-logo.svg', import.meta.url)}" alt="Strava" width="62" height="13">`;
 export const stravaLink = (url, label = 'club', cls = '') =>
-  `<a class="strava-link ${cls}" href="${url}" target="_blank" rel="noopener"><span>Join the</span> <b class="strava-word">Strava</b> <span>${label}</span>${icon('ext', 14)}</a>`;
+  `<a class="strava-link ${cls}" href="${url}" target="_blank" rel="noopener"><span>Join the</span>${stravaMark()}<span>${label}</span>${icon('ext', 14)}</a>`;

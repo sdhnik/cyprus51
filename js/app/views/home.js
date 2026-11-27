@@ -1,5 +1,5 @@
 // Public home (Main / HomeMobile designs) with the Rules dialog (RulesDesktop / RulesMobile).
-import { esc, icon } from '../ui.js';
+import { esc, icon, stravaMark } from '../ui.js';
 import { asset } from '../data.js';
 import { openRules } from '../rules.js';
 import { STRAVA_CLUB_URL } from '../../config.js';
@@ -28,7 +28,7 @@ export function home(root, { args } = {}) {
           <p class="home__badge">5+1 CHALLENGE</p>
         </div>
         <p class="home__lead">Five half marathons across Cyprus. One international adventure. Six finish lines to collect in your running passport.</p>
-        <div class="home__actions"><a class="c51-btn c51-btn--primary home__cta" href="#/join"><span>Join the challenge</span>${icon('arrow')}</a><a class="c51-btn c51-btn--secondary home__strava" href="${STRAVA_CLUB_URL}" target="_blank" rel="noopener"><span>Strava club</span>${icon('ext', 16)}</a></div>
+        <div class="home__actions"><a class="c51-btn c51-btn--primary home__cta" href="#/join"><span>Join the challenge</span>${icon('arrow')}</a><a class="c51-btn c51-btn--secondary home__strava" href="${STRAVA_CLUB_URL}" target="_blank" rel="noopener">${stravaMark()}<span>club</span>${icon('ext', 16)}</a></div>
         <p class="home__note"><span aria-hidden="true">✳</span>5 CYPRUS RACES · 1 INTERNATIONAL</p>
       </div>
     </main>
