@@ -303,14 +303,9 @@ export async function passport(root, { state, flash }) {
 
   // Install prompt: now, or as soon as the browser says the app can be installed
   const instId = planNext ? 'abroad' : next?.id, instDays = planNext ? daysUntil(new Date(planNext.race_date + 'T00:00:00'), now) : nextDays;
-  const fillInstall = () => {
-    const slot = root.querySelector('[data-inst-slot]');
-    if (!slot || slot.firstChild) return;
-    slot.innerHTML = installCard(instId, instDays);
-    wireInstall(slot);
-  };
-  fillInstall();
-  addEventListener('c51:installable', fillInstall, { once: true });
+  const slot = root.querySelector('[data-inst-slot]');
+  slot.innerHTML = installCard(instId, instDays);
+  wireInstall(slot);
 
   // Invite a friend
   root.querySelector('[data-invite]')?.addEventListener('click', async (e) => {

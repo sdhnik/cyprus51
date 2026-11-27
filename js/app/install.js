@@ -4,7 +4,16 @@
 import { esc, icon } from './ui.js';
 
 let deferred = null;
-addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferred = e; dispatchEvent(new Event('c51:installable')); });
+addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferred = e;
+  // A card already on screen (with manual steps) switches to the Install button.
+  document.querySelectorAll('[data-inst]').forEach((card) => {
+    card.innerHTML = body(!!card.querySelector('[data-inst-close]'));
+    wireInstall(card.parentElement);
+  });
+  dispatchEvent(new Event('c51:installable'));
+});
 addEventListener('appinstalled', () => { deferred = null; try { localStorage.setItem('c51-installed', '1'); } catch { /* blocked */ } });
 
 export const installed = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
@@ -15,21 +24,37 @@ const set = (k, v) => { try { localStorage.setItem(k, v); } catch { /* blocked *
 
 const SHARE = 'M12 3v12M8 7l4-4 4 4M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7';
 const ADD = 'M4 4h16v16H4zM12 8v8M8 12h8';
+const MORE = 'M5 12h.01M12 12h.01M19 12h.01';
 const svg = (d) => `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
 
-function body(closable) {
-  const x = closable ? `<button type="button" class="inst__x" data-inst-close aria-label="Close">×</button>` : '';
-  const lead = '<p class="inst__lead">Check in at the finish in one tap, even without signal.</p>';
+// Which phone and browser, so the steps match what the runner sees.
+function device() {
+  const ua = navigator.userAgent;
+  const inApp = /Instagram|FBAN|FBAV|FB_IAB|Line\/|Telegram|WhatsApp|Snapchat|TikTok|LinkedInApp/i.test(ua);
   if (ios()) {
-    return `<p class="inst__os">iPhone</p>${x}<h2 class="inst__t">Keep your passport on your home screen</h2>${lead}
-      <ol class="inst__steps"><li><span>${svg(SHARE)}</span><p>Tap <b>Share</b> in Safari</p></li><li><span>${svg(ADD)}</span><p>Choose <b>Add to Home Screen</b></p></li></ol>`;
+    const b = /CriOS/i.test(ua) ? 'Chrome' : /FxiOS/i.test(ua) ? 'Firefox' : /EdgiOS/i.test(ua) ? 'Edge' : inApp ? '' : 'Safari';
+    if (!b) return { os: 'iPhone', steps: [[MORE, 'Open this page in <b>Safari</b> (menu ••• → Open in browser)'], [SHARE, 'Tap <b>Share</b>, then <b>Add to Home Screen</b>']] };
+    if (b === 'Safari') return { os: 'iPhone · Safari', steps: [[SHARE, 'Tap <b>Share</b> in Safari'], [ADD, 'Choose <b>Add to Home Screen</b>']] };
+    if (b === 'Chrome') return { os: 'iPhone · Chrome', steps: [[SHARE, 'Tap <b>Share</b> in the address bar'], [ADD, 'Choose <b>Add to Home Screen</b>']] };
+    return { os: `iPhone · ${b}`, steps: [[MORE, 'Open the browser <b>menu</b>, then <b>Share</b>'], [ADD, 'Choose <b>Add to Home Screen</b>']] };
   }
-  return `<p class="inst__os">${phone() ? 'Android' : 'This computer'}</p>${x}<h2 class="inst__t">Keep your passport on your home screen</h2>${lead}
-    <ol class="inst__steps"><li><span>${svg(ADD)}</span><p>Tap <b>Install</b> below</p></li></ol>
-    <button type="button" class="c51-btn c51-btn--primary c51-btn--block" data-inst-go>Install</button>`;
+  const label = phone() ? 'Android' : 'This computer';
+  if (deferred) return { os: label, steps: [[ADD, 'Tap <b>Install</b> below']], button: true };
+  if (inApp) return { os: label, steps: [[MORE, 'Open this page in <b>Chrome</b> (menu ⋮ → Open in browser)'], [ADD, 'Then menu ⋮ → <b>Install app</b>']] };
+  const b = /SamsungBrowser/i.test(ua) ? 'Samsung Internet' : /Firefox/i.test(ua) ? 'Firefox' : '';
+  return { os: b ? `${label} · ${b}` : label, steps: [[MORE, 'Open the browser <b>menu</b> (⋮ or ☰)'], [ADD, `Choose <b>${b === 'Samsung Internet' ? 'Add page to → Home screen' : 'Install app'}</b> or <b>Add to Home screen</b>`]] };
 }
 
-const canOffer = () => !installed() && (ios() || deferred);
+function body(closable) {
+  const d = device();
+  const x = closable ? `<button type="button" class="inst__x" data-inst-close aria-label="Close">×</button>` : '';
+  return `<p class="inst__os">${esc(d.os)}</p>${x}<h2 class="inst__t">Keep your passport on your home screen</h2>
+    <p class="inst__lead">Check in at the finish in one tap, even without signal.</p>
+    <ol class="inst__steps">${d.steps.map(([ic, t]) => `<li><span>${svg(ic)}</span><p>${t}</p></li>`).join('')}</ol>
+    ${d.button ? '<button type="button" class="c51-btn c51-btn--primary c51-btn--block" data-inst-go>Install</button>' : ''}`;
+}
+
+const canOffer = () => !installed() && (ios() || deferred || phone());
 
 // Passport card: first visit after sign-up, then in each race week until closed for that race.
 export function installCard(nextRace, daysToRace) {

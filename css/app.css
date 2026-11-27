@@ -792,3 +792,13 @@ html { scroll-padding-top: 110px; }
 .inst--plain .inst__t { display: none; }
 .inst__steps p { margin: 0; }
 [data-inst-slot]:empty { display: none; }
+.rc-narrow { display: none; }
+.rc-wide, .rc-narrow > svg, .rc-wide > svg { display: block; }
+@media (max-width: 600px) {
+  .rc-wide { display: none; }
+  .rc-narrow { display: block; }
+}
+@media (max-width: 900px) {
+  .rc-share__btns { flex-direction: column; }
+  .rc-share__btns > * { width: 100%; }
+}

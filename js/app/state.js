@@ -5,11 +5,12 @@ export const state = { session: null, profile: null };
 export async function loadProfile() {
   if (!state.session) { state.profile = null; return null; }
   const key = `c51-profile-${state.session.user.id}`;
-  if (!navigator.onLine) {                      // no signal: the profile from last time
-    try { state.profile = JSON.parse(localStorage.getItem(key)); } catch { state.profile = null; }
-    return state.profile;
-  }
-  const { data } = await sb.from('profiles').select('*').eq('id', state.session.user.id).maybeSingle();
+  const saved = () => { try { return JSON.parse(localStorage.getItem(key)); } catch { return null; } };
+  if (!navigator.onLine) return (state.profile = saved());      // no signal: the profile from last time
+  let q = sb.from('profiles').select('*').eq('id', state.session.user.id);
+  if (saved() && AbortSignal.timeout) q = q.abortSignal(AbortSignal.timeout(6000));   // weak signal: don't wait long
+  const { data, error } = await q.maybeSingle();
+  if (error && !data) return (state.profile = saved());
   state.profile = data;
   try { if (data) localStorage.setItem(key, JSON.stringify(data)); } catch { /* full or blocked */ }
   return data;

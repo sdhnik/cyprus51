@@ -177,9 +177,9 @@ export async function race(root, { state, args, flash }) {
     }
     const raw = c.pts.map((p) => p[2]);
     const hi = Math.round(Math.max(...raw)), lo = Math.round(Math.min(...raw));
-    box.innerHTML = `<div class="rc-mapbox" data-map>${routeSvg(c, `Course map of ${esc(x.name)}`)}</div>
+    box.innerHTML = `<div class="rc-mapbox" data-map><span class="rc-wide">${routeSvg(c, `Course map of ${esc(x.name)}`)}</span><span class="rc-narrow">${routeSvg(c, `Course map of ${esc(x.name)}`, 340, 240)}</span></div>
       <div class="rc-legend"><span><i class="rc-legend__line"></i>Route</span><span><i class="rc-legend__km">5</i>Kilometre marks</span></div>
-      <div class="rc-sec"><p class="lbl">Elevation, metres</p>${elevationSvg(c, `Elevation profile: ${lo} to ${hi} metres, ${c.gain} metres of climbing`)}</div>
+      <div class="rc-sec"><p class="lbl">Elevation, metres</p><div class="rc-wide">${elevationSvg(c, `Elevation profile: ${lo} to ${hi} metres, ${c.gain} metres of climbing`)}</div><div class="rc-narrow">${elevationSvg(c, `Elevation profile: ${lo} to ${hi} metres, ${c.gain} metres of climbing`, 340, 190)}</div></div>
       <div class="rc-sec rc-facts rc-facts--3">${fact('Distance', '21.1 km')}${fact('Elevation gain', `${c.gain} m`)}${fact('Highest point', `${hi} m`)}${fact('Lowest point', `${lo} m`)}
         ${x.abroad ? fact('Country', x.sub?.abroad_country || x.plan?.country || '—') : (r.startFinish ? fact('Start & finish', r.startFinish) : '') + (r.course ? fact('Course', r.course) : '')}</div>`;
     // Swap the drawing for the real map once Leaflet is loaded; keep the drawing if it can't load.
@@ -434,8 +434,12 @@ function wireCheckIn(root, x) {
     } catch (error) {
       done();
       if (isOffline(error)) {
-        enqueue({ ...row, uid: x.uid, photo: photo.blob ? await toDataUrl(photo.blob) : null });
-        go(`race/${x.abroad ? 'abroad' : x.r.id}`, { flash: banner('pending', 'Saved on your phone', 'No signal at the finish. Your check-in goes out by itself when you’re back online.') });
+        const kept = enqueue({ ...row, uid: x.uid, photo: photo.blob ? await toDataUrl(photo.blob) : null });
+        if (kept === 'failed') {
+          f.querySelector('.form-msg').innerHTML = banner('error', 'No signal, and no room to save it', 'Your phone’s storage for this site is full. Keep this screen open and tap Check in again when you have signal.');
+          return;
+        }
+        go(`race/${x.abroad ? 'abroad' : x.r.id}`, { flash: banner('pending', 'Saved on your phone', kept === 'saved' ? 'No signal at the finish. Your check-in goes out by itself when you’re back online.' : 'No signal at the finish. Your check-in goes out by itself when you’re back online. The selfie didn’t fit on the phone: add it with your official result.') });
       } else {
         f.querySelector('.form-msg').innerHTML = banner('error', 'Could not check in', esc(error.message || 'Try again in a minute.'));
       }
@@ -591,8 +595,10 @@ function wireShare(root, x) {
   const isPb = m.pb && m.pb.r.id === r.id;
   const place = x.abroad ? 'International' : r.city;
   const text = `🟠 Cyprus 5+1 · ${place} stamp collected · ${m.nV} of 6 · ${isPb ? 'PB ' : ''}${fmtTime(sub.official_time_s)}\nSix finish lines, one passport → ${STRAVA_CLUB_URL.replace(/^https:\/\/(www\.)?/, '')}`;
+  // No clipboard in this browser: the club link alone is enough.
+  if (!navigator.clipboard?.writeText || !isSecureContext) { btn.remove(); root.querySelector('[data-share-note]').textContent = 'Share your run with the Cyprus 5+1 club.'; return; }
   btn.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(text); } catch { return; }
+    try { await navigator.clipboard.writeText(text); } catch { window.open(STRAVA_CLUB_URL, '_blank', 'noopener'); return; }
     btn.innerHTML = `${icon('check', 16)}Copied`;
     root.querySelector('[data-share-note]').textContent = 'Copied. Paste it into your Strava activity.';
     setTimeout(() => { btn.textContent = 'Copy for Strava'; }, 2400);

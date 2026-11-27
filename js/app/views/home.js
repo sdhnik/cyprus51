@@ -32,7 +32,7 @@ export function home(root, { args } = {}) {
         <p class="home__note"><span aria-hidden="true">✳</span>5 CYPRUS RACES · 1 INTERNATIONAL</p>
       </div>
     </main>
-    <div class="c51-ticker home__ticker" aria-label="${esc(TICKER.join(', '))}"><div class="c51-ticker__track" aria-hidden="true"></div></div>
+    <div class="c51-ticker home__ticker" role="img" aria-label="${esc(TICKER.join(', '))}"><div class="c51-ticker__track" aria-hidden="true"></div></div>
   </div>`;
 
   fillTicker(root.querySelector('.home__ticker .c51-ticker__track'));

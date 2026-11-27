@@ -17,11 +17,14 @@ export async function loadSeason() {
     const saved = readSaved(key);
     if (saved) return Object.assign(model(await loadRaces(), saved.subs, saved.comm, saved.plan, today()), { offline: true, savedAt: saved.at });
   }
+  // A weak signal can look "online": give up after a few seconds and use the saved copy.
+  const signal = readSaved(key) && AbortSignal.timeout ? AbortSignal.timeout(6000) : undefined;
+  const q = (b) => (signal ? b.abortSignal(signal) : b);
   const [data, subsRes, commRes, planRes] = await Promise.all([
     loadRaces(),
-    sb.from('submissions').select('*').eq('user_id', uid),
-    sb.rpc('community_stats'),
-    sb.from('abroad_plans').select('*').eq('user_id', uid).maybeSingle(),
+    q(sb.from('submissions').select('*').eq('user_id', uid)),
+    q(sb.rpc('community_stats')),
+    q(sb.from('abroad_plans').select('*').eq('user_id', uid).maybeSingle()),
   ]);
   if (subsRes.error) {
     // No signal (at the finish line): show the season as it was last time.

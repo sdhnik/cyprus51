@@ -11,14 +11,14 @@ const walk = (dir) => readdirSync(join(root, dir)).flatMap((f) => {
 });
 
 const files = [
-  'app/index.html', 'manifest.webmanifest', 'favicon.ico',
+  'app/index.html', 'manifest.webmanifest',
   ...walk('css'),
   ...walk('js').filter((f) => !f.includes('vendor/maplibre') && f.endsWith('.js')),   // the map library loads on demand
   ...walk('data'),
   ...walk('assets/fonts').filter((f) => f.endsWith('.woff2')),
   ...walk('assets/stamps').filter((f) => f.endsWith('.webp')),
   ...walk('assets/achievements').filter((f) => f.endsWith('.webp')),
-  ...walk('assets/patterns'), ...walk('assets/icons'), ...walk('assets/brand'),
+  'assets/patterns/cyprus-topo.webp', ...walk('assets/brand'),   // icons and the Next up pattern load when needed
 ].map((f) => f.split('\\').join('/')).sort();
 
 const hash = createHash('sha256');

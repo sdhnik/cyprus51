@@ -88,3 +88,23 @@ begin
   ), '[]'::jsonb);
 end;
 $$;
+
+-- Review queue counters without test accounts
+create or replace function public.admin_counts()
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Admins only';
+  end if;
+  return (select jsonb_object_agg(status, n) from (
+    select s.status, count(*) n
+    from public.submissions s join public.profiles p on p.id = s.user_id
+    where not p.is_test
+    group by s.status) c);
+end;
+$$;

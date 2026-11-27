@@ -4,13 +4,18 @@ import { uploadPhoto, fromDataUrl } from './photo.js';
 
 const KEY = 'c51-outbox';
 const read = () => { try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; } };
-const write = (list) => { try { localStorage.setItem(KEY, JSON.stringify(list)); } catch { /* storage full or blocked */ } };
+const write = (list) => { try { localStorage.setItem(KEY, JSON.stringify(list)); return true; } catch { return false; } };   // false: storage full or blocked
 
-export const isOffline = (error) => !navigator.onLine || /fetch|network|load failed/i.test(error?.message || String(error || ''));
+export const isOffline = (error) => !navigator.onLine || /fetch|network|load failed|abort|timed? ?out/i.test(`${error?.name || ''} ${error?.message || error || ''}`);
 export const queued = (raceId, uid) => read().find((x) => x.race_id === raceId && x.uid === uid) || null;
 
+// Returns 'saved', 'saved-no-photo' (no room for the photo) or 'failed' (storage full or blocked).
 export function enqueue(item) {
-  write(read().filter((x) => !(x.race_id === item.race_id && x.uid === item.uid)).concat({ ...item, saved_at: new Date().toISOString() }));
+  const rest = read().filter((x) => !(x.race_id === item.race_id && x.uid === item.uid));
+  const at = new Date().toISOString();
+  if (write(rest.concat({ ...item, saved_at: at }))) return 'saved';
+  if (item.photo && write(rest.concat({ ...item, photo: null, saved_at: at }))) return 'saved-no-photo';
+  return 'failed';
 }
 
 let running = null;
