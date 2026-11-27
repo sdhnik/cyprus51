@@ -44,7 +44,7 @@ async function load(state, id) {
   const abroad = id === 'abroad';
   const r = abroad ? m.abroad : m.cyprus.find((x) => x.id === id);
   if (!r) return { m, r: null };
-  const { data: sub, error } = await sb.from('submissions').select('*').eq('race_id', r.id).maybeSingle();
+  const { data: sub, error } = await sb.from('submissions').select('*').eq('user_id', state.session.user.id).eq('race_id', r.id).maybeSingle();
   if (error) throw error;
   const plan = m.plan;
   const n = abroad ? 6 : m.cyprus.indexOf(r) + 1;

@@ -1,5 +1,5 @@
 // Everything the passport and the achievement pages know about a runner's season.
-import { today } from './state.js';
+import { today, state } from './state.js';
 import { sb } from './supa.js';
 import { loadRaces, raceDate, daysUntil, fmtTime, asset } from './data.js';
 
@@ -8,11 +8,13 @@ export const SUB130 = 90 * 60;
 export const badgeImg = (slug, earned) => asset(`assets/achievements/${slug}-${earned ? 'earned' : 'locked'}.webp`);
 
 export async function loadSeason() {
+  // Always the signed-in runner's own rows: an admin can read everyone's.
+  const uid = state.session.user.id;
   const [data, subsRes, commRes, planRes] = await Promise.all([
     loadRaces(),
-    sb.from('submissions').select('race_id, status, watch_time_s, official_time_s, place, place_of'),
+    sb.from('submissions').select('race_id, status, watch_time_s, official_time_s, place, place_of').eq('user_id', uid),
     sb.rpc('community_stats'),
-    sb.from('abroad_plans').select('*').maybeSingle(),
+    sb.from('abroad_plans').select('*').eq('user_id', uid).maybeSingle(),
   ]);
   if (subsRes.error) throw subsRes.error;
   return model(data, subsRes.data, commRes.error ? null : commRes.data, planRes.error ? null : planRes.data, today());
