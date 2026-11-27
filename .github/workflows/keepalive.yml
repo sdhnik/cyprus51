@@ -1,6 +1,8 @@
 # Supabase Free pauses a project after a week without requests.
-# One tiny query a day keeps it awake. GitHub turns scheduled jobs off after
-# 60 days without commits; if that happens, press "Enable workflow" in the Actions tab.
+# One tiny query a day keeps it awake.
+# GitHub turns scheduled jobs off after 60 days without repository activity. The second
+# job re-enables this workflow and the weekly backup every day, which restarts that
+# 60-day count without commits. If it ever stops anyway, press "Enable workflow" in Actions.
 name: Keep Supabase awake
 
 on:
@@ -20,3 +22,16 @@ jobs:
             -H 'Content-Type: application/json' -d '{}')
           echo "Supabase answered $code"
           test "$code" = "200"
+
+  stay-enabled:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Re-enable the scheduled workflows
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for wf in keepalive.yml backup.yml; do
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/$wf/enable" && echo "$wf enabled"
+          done

@@ -37,8 +37,8 @@ Distance, elevation, the map and the profile are calculated from the GPX.
 ## Automations
 
 - **Publish site** (`.github/workflows/pages.yml`): on every push to `main`, checks `races.json` and publishes.
-- **Keep Supabase awake** (`.github/workflows/keepalive.yml`): one tiny request a day. GitHub turns scheduled jobs off after 60 days without commits; re-enable it in the Actions tab if that happens.
-- **Back up database** (`.github/workflows/backup.yml`): every Monday, an encrypted backup of the database (and the photo and GPX files, if the key is set). It needs repository secrets; see the top of the file. Same 60-day rule as above.
+- **Keep Supabase awake** (`.github/workflows/keepalive.yml`): one tiny request a day. It also re-enables itself and the backup every day, so GitHub's "60 days without activity" rule does not switch them off.
+- **Back up database** (`.github/workflows/backup.yml`): every Monday, an encrypted backup of the database (and the photo and GPX files, if the key is set). It needs repository secrets; see the top of the file.
 
 ## Backups
 
