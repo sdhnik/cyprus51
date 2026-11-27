@@ -2,6 +2,7 @@
 // Cyprus 5+1 result emails, sent from the project Gmail.
 //   { kind: 'review', submission_id }  – called by the database when a result is verified or rejected
 //   { kind: 'reminders' }               – called once a day: check-ins without an official result yet
+//   { kind: 'reminders', test_now: true } – same, but test accounts get theirs at once (admin button)
 //   { kind: 'test', to? }               – sends the three emails with sample data (to GMAIL_USER by default)
 // Every call must carry the header x-notify-secret: NOTIFY_SECRET.
 // Secrets (Edge Functions → Secrets): GMAIL_USER, GMAIL_APP_PASSWORD, NOTIFY_SECRET; optional SITE_URL, APP_URL.
@@ -30,7 +31,7 @@ Deno.serve(async (req) => {
   const body = await req.json().catch(() => ({}));
   try {
     if (body.kind === 'review') return json(await review(body.submission_id));
-    if (body.kind === 'reminders') return json(await reminders());
+    if (body.kind === 'reminders') return json(await reminders(!!body.test_now));
     if (body.kind === 'test') return json(await test(body.to || GMAIL));
     return json({ error: 'unknown kind' }, 400);
   } catch (e) {
@@ -179,7 +180,7 @@ async function runner(userId: string) {
     db.from('profiles').select('display_name, is_test').eq('id', userId).maybeSingle(),
     db.auth.admin.getUserById(userId),
   ]);
-  return { name: profile?.display_name ?? '', email: u?.user?.email ?? '' };
+  return { name: profile?.display_name ?? '', email: u?.user?.email ?? '', isTest: !!profile?.is_test };
 }
 
 async function place(sub: { race_id: string; abroad_name?: string | null }) {
@@ -242,19 +243,21 @@ async function review(id: string) {
 }
 
 // ── Daily reminder: checked in, no official result after a day ─────────────
-async function reminders() {
+async function reminders(testNow = false) {
   const now = Date.now();
   const { data: subs, error } = await db.from('submissions').select('*').eq('status', 'checked_in')
-    .lt('checked_in_at', new Date(now - 18 * 3600e3).toISOString())
     .gt('checked_in_at', new Date(now - 14 * 86400e3).toISOString());
   if (error) throw error;
   const out: Record<string, string> = {};
   for (const sub of subs ?? []) {
     try {
       const who = await runner(sub.user_id);
+      const old = now - Date.parse(sub.checked_in_at) > 18 * 3600e3;
+      const early = testNow && who.isTest;
+      if (!old && !early) continue;
       const where = await place(sub);
       const mail = reminder({ site: SITE, app: APP, name: who.name, place: where.place, raceId: where.raceId, watch: sub.watch_time_s ? fmtTime(sub.watch_time_s) : '' });
-      out[sub.id] = await sendOnce(`${sub.id}:reminder`, who.email, mail);
+      out[sub.id] = await sendOnce(early ? `${sub.id}:reminder:test:${now}` : `${sub.id}:reminder`, who.email, mail);
     } catch (e) {
       out[sub.id] = `failed: ${(e as Error).message}`;
     }

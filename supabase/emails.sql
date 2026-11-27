@@ -64,3 +64,31 @@ create trigger submissions_email
 -- Reminders: every day at 09:07 UTC (11:07 or 12:07 in Cyprus). The function picks check-ins older than 18 h.
 select cron.unschedule(jobid) from cron.job where jobname = 'c51-reminders';
 select cron.schedule('c51-reminders', '7 9 * * *', $$select private.notify('{"kind":"reminders"}'::jsonb)$$);
+
+-- Admin buttons (Review queue → Email check).
+--   'samples'   – the three emails with sample data, to the admin's own address
+--   'reminders' – runs the reminder job now; test accounts get theirs without the one-day wait
+create or replace function public.admin_email_check(what text)
+returns void
+language plpgsql
+security definer
+set search_path = ''
+as $$
+declare
+  me text;
+begin
+  if not public.is_admin() then
+    raise exception 'admins only' using errcode = '42501';
+  end if;
+  if what = 'samples' then
+    select email into me from auth.users where id = auth.uid();
+    perform private.notify(jsonb_build_object('kind', 'test', 'to', me));
+  elsif what = 'reminders' then
+    perform private.notify('{"kind":"reminders","test_now":true}'::jsonb);
+  else
+    raise exception 'unknown check: %', what;
+  end if;
+end;
+$$;
+revoke all on function public.admin_email_check(text) from public, anon;
+grant execute on function public.admin_email_check(text) to authenticated;

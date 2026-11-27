@@ -102,7 +102,17 @@ export async function admin(root, { state }) {
       <div class="adm">
         <section class="card adm-list" aria-label="${tab} results"><p class="lbl adm-list__head">Oldest first</p>${rows || `<p class="adm-list__none">Nothing here.</p>`}</section>
         <section class="card adm-detail" id="adm-detail" aria-label="Selected result">${detail}</section>
-      </div>`);
+      </div>
+      <section class="card adm-mail" aria-labelledby="adm-mail-h">
+        <div class="adm-mail__text">
+          <h2 class="lbl" id="adm-mail-h">Email check</h2>
+          <p>Sample emails go to your own address. Reminders run the daily job now: test accounts get theirs at once, real runners only after the usual day.</p>
+        </div>
+        <div class="adm-mail__btns">
+          <button type="button" class="c51-btn c51-btn--secondary" data-mail="samples">Send sample emails to me</button>
+          <button type="button" class="c51-btn c51-btn--secondary" data-mail="reminders">Run reminders now</button>
+        </div>
+      </section>`);
     wire(cur);
   }
 
@@ -116,6 +126,16 @@ export async function admin(root, { state }) {
       const { data: d } = await sb.storage.from('gpx').createSignedUrl(e.currentTarget.dataset.gpx, 300);
       if (d?.signedUrl) window.open(d.signedUrl, '_blank', 'noopener');
     });
+    root.querySelectorAll('[data-mail]').forEach((b) => b.addEventListener('click', async () => {
+      const done = busy(b, 'Sending…');
+      const { error } = await sb.rpc('admin_email_check', { what: b.dataset.mail });
+      done();
+      toast = error
+        ? banner('error', 'Could not start the email check', esc(error.message))
+        : banner('success', b.dataset.mail === 'samples' ? 'Sample emails are on the way' : 'Reminder job started', 'Check the inbox in a minute. If nothing comes, see Edge Functions → notify → Logs.');
+      draw();
+      root.querySelector('[aria-live]')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }));
     if (!cur) return;
     const form = root.querySelector('.adm-d__reject');
     form?.querySelectorAll('[data-q]').forEach((q) => q.addEventListener('click', () => { form.reason.value = q.dataset.q; form.reason.focus(); }));
