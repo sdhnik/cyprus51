@@ -745,3 +745,4 @@ html { scroll-padding-top: 110px; }
 .rc-pin--end { background: var(--ink); color: #fff; font-size: 9.5px; box-shadow: 0 0 0 2px #fff; }
 .testbar { width: 100%; max-width: var(--content-max); margin: 0 auto 8px; padding: 8px clamp(20px, 4vw, 48px); box-sizing: border-box; font-size: 13px; color: #8a4a00; }
 .testbar b { padding: 2px 8px; border-radius: 999px; background: #ffe7c2; color: #8a4a00; }
+.rc-live .leaflet-tile-pane { filter: grayscale(1) contrast(.85) brightness(1.08); opacity: .9; }

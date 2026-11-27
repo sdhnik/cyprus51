@@ -1,4 +1,4 @@
-// Course on a real map: Leaflet (self-hosted) with CARTO light tiles from OpenStreetMap data.
+// Course on a real map: Leaflet (self-hosted) with OpenStreetMap tiles, toned down to a light grey in CSS.
 // Loaded only on race pages. Without network the SVG drawing from course.js stays.
 import { asset } from './data.js';
 
@@ -31,9 +31,9 @@ export async function routeMap(el, c, label) {
   const map = L.map(el, { scrollWheelZoom: false, dragging: !touch, tap: false, zoomSnap: 0.25, attributionControl: true });
   el.setAttribute('role', 'region');
   el.setAttribute('aria-label', label);
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-    subdomains: 'abcd', maxZoom: 19, detectRetina: false,
-    attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> · © <a href="https://carto.com/attributions" target="_blank" rel="noopener">CARTO</a>',
+  L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    maxZoom: 19,
+    attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a> contributors',
   }).addTo(map);
   map.attributionControl.setPrefix(false);
 
