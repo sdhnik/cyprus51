@@ -20,6 +20,8 @@ const ICON = {
   refresh: 'M20 11a8 8 0 1 0-2.3 5.7M20 4v7h-7',
   arrowUpRight: 'M7 17 17 7M8 7h9v9',
   arrow: 'M5 12h14M13 6l6 6-6 6',
+  edit: 'M4 20h4L19 9l-4-4L4 16v4zM14 6l4 4',
+  plus: 'M12 5v14M5 12h14',
 };
 const svgIcon = (d, size = 24) => `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
 
@@ -118,8 +120,8 @@ export async function passport(root, { state, flash }) {
   if (!abroadDone) {
     const planDays = plan ? daysUntil(new Date(plan.race_date + 'T00:00:00'), now) : null;
     CH.push(plan
-      ? { kind: 'Race abroad', icon: ICON.globe, title: `Run ${plan.race_name}`, text: `${plan.country} · ${dayLong(plan.race_date)}. Your sixth stamp. Check in at the finish like any other race.`, tlabel: planDays > 0 ? 'Days to race' : 'Race day', target: planDays > 0 ? String(planDays) : dayShort(plan.race_date).toUpperCase(), action: 'Edit race', unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) }
-      : { kind: 'Race abroad', icon: ICON.globe, title: 'Add your race abroad', text: `Already entered a half marathon outside Cyprus? Add it to your ${data.season} calendar and we’ll count down to it.`, action: 'Add race abroad', unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) });
+      ? { kind: 'Race abroad', icon: ICON.globe, title: `Run ${plan.race_name}`, text: `${plan.country} · ${dayShort(plan.race_date)}. Your sixth stamp.`, tlabel: planDays > 0 ? 'Days to race' : 'Race day', target: planDays > 0 ? String(planDays) : dayShort(plan.race_date).toUpperCase(), edit: true, unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) }
+      : { kind: 'Race abroad', icon: ICON.globe, title: 'Add your race abroad', text: `Entered a half abroad? Add it to your ${data.season} calendar.`, tlabel: 'Stamp 6', target: 'Not added yet', muted: true, add: true, unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) });
   }
 
   const challengeCard = CH.length ? `<section class="card ps-ch" aria-labelledby="goal-title">
@@ -222,8 +224,7 @@ export async function passport(root, { state, flash }) {
         <div class="ps-ch__top"><div class="ps-ch__title"><span class="ps-ch__icon">${svgIcon(ch.icon, 28)}</span><h2 class="h2"${n === 0 ? ' id="goal-title"' : ''}>${esc(ch.title)}</h2></div><p class="ps-ch__text">${esc(ch.text)}</p></div>
         <div class="ps-ch__result">
           ${ch.progress ? progress(ch.progress[0], ch.progress[1], ch.progress[2], ch.title) : ''}
-          ${ch.target ? `<div class="ps-ch__target"><div><p class="ps-ch__tlabel">${esc(ch.tlabel)}</p><p class="num ps-ch__tvalue${ch.small ? ' is-small' : ''}">${esc(ch.target)}</p></div>${ch.cta ? `<a href="${ch.cta}" class="ps-ch__cta" aria-label="Plan ${esc(nextName)} with this target" title="Plan this race">${svgIcon(ICON.arrow, 20)}</a>` : ''}</div>` : ''}
-          ${ch.action ? `<div><button type="button" class="c51-btn c51-btn--dark c51-btn--sm ps-ch__action" data-abroad>${esc(ch.action)}</button></div>` : ''}
+          ${ch.target ? `<div class="ps-ch__target"><div><p class="ps-ch__tlabel">${esc(ch.tlabel)}</p><p class="num ps-ch__tvalue${ch.small ? ' is-small' : ''}${ch.muted ? ' is-muted' : ''}">${esc(ch.target)}</p></div>${ch.cta ? `<a href="${ch.cta}" class="ps-ch__cta" aria-label="Plan ${esc(nextName)} with this target" title="Plan this race">${svgIcon(ICON.arrow, 20)}</a>` : ''}${ch.edit ? `<button type="button" class="ps-ch__cta" data-abroad aria-label="Edit your race abroad" title="Edit race">${svgIcon(ICON.edit, 18)}</button>` : ''}${ch.add ? `<button type="button" class="ps-ch__add" data-abroad>${svgIcon(ICON.plus, 18)}Add race</button>` : ''}</div>` : ''}
           ${ch.unlock ? `<div class="ps-ch__unlock"><img src="${ch.unlockImg}" alt=""><p><span>Unlocks</span> <strong>${esc(ch.unlock)}</strong></p></div>` : ''}
         </div></div>`).join('');
     const show = () => {

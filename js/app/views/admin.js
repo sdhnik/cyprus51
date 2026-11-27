@@ -60,7 +60,7 @@ export async function admin(root, { state }) {
 
     let detail;
     if (!cur) {
-      detail = `<div class="adm-empty"><p class="num">ALL CLEAR</p><p>${tab === 'pending' ? 'No results waiting for review.' : `No ${tab} results yet.`}</p></div>`;
+      detail = `<div class="adm-empty"><div><p class="num">ALL CLEAR</p><p>${tab === 'pending' ? 'No results waiting for review.' : `No ${tab} results yet.`}</p></div></div>`;
     } else {
       const r = raceLabel(cur), v = vsPb(cur);
       const att = [cur.photo_path ? 'Finish photo (private)' : '', cur.gpx_path ? `<button type="button" class="adm-link" data-gpx="${esc(cur.gpx_path)}">Course GPX ${icon('ext', 14)}</button>` : ''].filter(Boolean).join('<br>') || 'None';
