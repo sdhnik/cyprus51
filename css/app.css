@@ -734,14 +734,14 @@ html { scroll-padding-top: 110px; }
 .rc-hero__title { font-size: 56px; line-height: 60px; }
 @media (max-width: 900px) { .rc-hero__title { font-size: 44px; line-height: 48px; } }
 
-/* Course map (Leaflet) */
+/* Course map (MapLibre) */
 .rc-mapbox { position: relative; border-radius: 12px; overflow: hidden; background: #f8f7f4; }
-.rc-live { position: absolute; inset: 0; z-index: 1; background: #f8f7f4; font: 12px var(--font-sans); }
+.rc-live, .rc-live.maplibregl-map { position: absolute; inset: 0; z-index: 1; background: #f8f7f4; font: 12px var(--font-sans); }
 .rc-mapbox.is-live .rc-map { visibility: hidden; }
-.rc-live .leaflet-control-zoom a { width: 36px; height: 36px; line-height: 36px; color: var(--ink); }
-.rc-live .leaflet-control-attribution { font-size: 10px; background: rgba(255,255,255,.8); }
-.rc-pin { display: grid; place-items: center; width: 100%; height: 100%; border-radius: 999px; font: 700 10px var(--font-sans); box-sizing: border-box; }
-.rc-pin--km { background: #fff; border: 1.5px solid var(--ink); color: var(--ink); }
-.rc-pin--end { background: var(--ink); color: #fff; font-size: 9.5px; box-shadow: 0 0 0 2px #fff; }
+.rc-live .maplibregl-ctrl-attrib { font-size: 10px; background: rgba(255,255,255,.8); }
+.rc-live .maplibregl-cooperative-gesture-screen { font: 600 15px var(--font-sans); }
+.rc-pin { display: grid; place-items: center; border-radius: 999px; font: 700 10px var(--font-sans); box-sizing: border-box; }
+.rc-pin--km { width: 24px; height: 24px; background: #fff; border: 1.5px solid var(--ink); color: var(--ink); }
+.rc-pin--end { width: 30px; height: 30px; background: var(--ink); color: #fff; font-size: 9.5px; box-shadow: 0 0 0 2px #fff; }
 .testbar { width: 100%; max-width: var(--content-max); margin: 0 auto 8px; padding: 8px clamp(20px, 4vw, 48px); box-sizing: border-box; font-size: 13px; color: #8a4a00; }
 .testbar b { padding: 2px 8px; border-radius: 999px; background: #ffe7c2; color: #8a4a00; }
