@@ -3,7 +3,7 @@ import { appShell } from '../layout.js';
 import { esc, icon } from '../ui.js';
 import { raceDate, formatRaceDate, daysUntil, checkInOpen, seasonEnd, stampImg, course, profilePath, fmtTime, asset } from '../data.js';
 import { loadSeason, HALF_KM, SUB130, badgeImg } from '../model.js';
-import { openAbroad } from '../abroad.js';
+import { openAbroad, planCourse } from '../abroad.js';
 
 let focusAbroad = false;
 import { render } from '../router.js';
@@ -81,8 +81,32 @@ export async function passport(root, { state, flash }) {
   </section>` : '';
 
   // ── Next up ────────────────────────────────────────
+  // The race abroad takes the card when it comes before the next Cyprus race.
+  const abroadRace = races.find((r) => r.abroad);
+  const planStart = plan ? new Date(plan.race_date + 'T00:00:00') : null;
+  const planNext = plan && !abroadDone && !subs.has(abroadRace.id) && daysUntil(planStart, now) >= 0
+    && (!next || planStart < raceDate(next).start) ? plan : null;
   let nextCard = '';
-  if (next) {
+  if (planNext) {
+    const pd = daysUntil(planStart, now);
+    const long = planNext.race_name.length > 26;
+    nextCard = `<section class="ps-next" aria-labelledby="next-title">
+      <img class="ps-next__bg" src="${asset('assets/patterns/route-lines.webp')}" alt="">
+      <div><p class="ps-next__eyebrow">NEXT UP · ${esc(dayShort(planNext.race_date).toUpperCase())} · ${pd === 0 ? 'TODAY' : `IN ${plural(pd, 'DAY', 'DAYS')}`}</p><h2 id="next-title" class="ps-next__title${long ? ' is-long' : ''}" title="${esc(planNext.race_name)}">${esc(planNext.race_name)}</h2></div>
+      <div class="ps-next__facts">
+        <div><p>Distance</p><p class="num">21.1 KM</p></div>
+        <div><p>Elevation gain</p><p class="num" data-gain>— M</p></div>
+        <div><p>Country</p><p class="num is-text">${esc(planNext.country.toUpperCase())}</p></div>
+      </div>
+      ${planNext.course_gpx
+        ? `<svg class="ps-next__profile" viewBox="0 0 600 70" preserveAspectRatio="none" aria-hidden="true"><path data-area fill="#0d1412" fill-opacity=".18"/><path data-line fill="none" stroke="#0d1412" stroke-width="2" vector-effect="non-scaling-stroke"/></svg>`
+        : `<button type="button" class="ps-next__nogpx" data-abroad>${svgIcon(ICON.plus, 18)}Add the course GPX to see the elevation profile</button>`}
+      <div class="ps-next__actions">
+        <a class="c51-btn c51-btn--dark" href="#/race/abroad">Plan this race ${icon('arrow')}</a>
+        ${planNext.website ? `<a class="ps-next__site" href="${esc(planNext.website)}" target="_blank" rel="noopener"><span>Race website</span>${svgIcon(ICON.arrowUpRight, 16)}</a>` : ''}
+      </div>
+    </section>`;
+  } else if (next) {
     const d = raceDate(next);
     const when = d.tbc ? formatRaceDate(next, { long: true }).toUpperCase() : `${formatRaceDate(next).toUpperCase()} · ${nextDays === 0 ? 'TODAY' : `IN ${plural(nextDays, 'DAY', 'DAYS')}`}`;
     nextCard = `<section class="ps-next" aria-labelledby="next-title">
@@ -266,8 +290,8 @@ export async function passport(root, { state, flash }) {
   });
 
   // Course profile of the next race
-  if (next) {
-    const cs = await course(next).catch(() => null);
+  if (planNext ? planNext.course_gpx : next) {
+    const cs = await (planNext ? planCourse(planNext) : course(next)).catch(() => null);
     if (cs) {
       root.querySelector('[data-gain]').textContent = `${cs.gain} M`;
       const p = profilePath(cs);

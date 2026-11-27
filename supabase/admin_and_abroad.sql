@@ -55,6 +55,7 @@ create table if not exists public.abroad_plans (
   race_date  date not null,
   country    text not null check (char_length(country) between 2 and 60),
   website    text check (website ~ '^https://'),
+  course_gpx text check (course_gpx ~ '^[0-9a-f-]{36}/abroad-course\.gpx$'),
   updated_at timestamptz not null default now()
 );
 

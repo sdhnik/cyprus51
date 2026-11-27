@@ -484,3 +484,29 @@ h1:focus { outline: none; }
 .cb-list [role=option] { height: 42px; box-sizing: border-box; display: flex; align-items: center; padding: 0 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 6px; font-size: 15px; cursor: pointer; }
 .cb-list [role=option]:hover, .cb-list [aria-selected="true"] { background: var(--orange-50); }
 .cb-none { padding: 10px 12px; font-size: 14px; color: var(--text-secondary); }
+
+/* Course GPX picker in the race abroad dialog */
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+.gpxpick__box { display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 8px 8px 12px; border: 1px dashed var(--border-control); border-radius: var(--radius-md); background: var(--white); }
+.gpxpick.is-error .gpxpick__box { border: 1px solid var(--error); }
+.gpxpick__icon { flex: none; display: grid; place-items: center; width: 40px; height: 40px; border-radius: 10px; background: var(--orange-50); color: var(--orange-500); }
+.gpxpick__txt { flex: 1; min-width: 0; }
+.gpxpick__label { margin: 0; font-size: 13px; font-weight: 600; }
+.gpxpick__value { margin: 2px 0 0; font-size: 15px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gpxpick__value.is-empty { color: var(--text-secondary); }
+.gpxpick__btn { flex: none; position: relative; cursor: pointer; text-transform: none; letter-spacing: 0; }
+.gpxpick__btn:focus-within { outline: 2px solid var(--orange-500); outline-offset: 2px; }
+.gpxpick__x { flex: none; width: 44px; height: 44px; border: 0; border-radius: 999px; background: transparent; font-size: 24px; line-height: 1; color: var(--text-secondary); cursor: pointer; }
+.gpxpick__x:hover { background: var(--grey-100, #f1f0ec); color: var(--ink); }
+.gpxpick__x[hidden] { display: none; }
+
+/* Next up for the race abroad */
+.ps-next__title.is-long { font-size: 36px; line-height: 40px; }
+.ps-next__title { display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; line-clamp: 2; overflow: hidden; overflow-wrap: anywhere; }
+.ps-next__facts p.num.is-text { overflow-wrap: anywhere; }
+.ps-next__nogpx { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 70px; padding: 12px; border: 1.5px dashed rgba(13,20,18,.35); border-radius: 12px; background: transparent; color: var(--ink); font: 600 15px var(--font-sans); cursor: pointer; }
+.ps-next__nogpx:hover { background: rgba(255,255,255,.25); }
+@media (max-width: 900px) { .ps-next__title.is-long { font-size: 28px; line-height: 32px; } }
+.sheet .c51-dialog__body { grid-template-columns: minmax(0, 1fr); }
+.sheet .c51-field, .gpxpick__box { min-width: 0; }
+@media (max-width: 560px) { .gpxpick__box { flex-wrap: wrap; } .gpxpick__txt { flex: 1 1 calc(100% - 56px); } .gpxpick__btn { margin-left: 52px; } }

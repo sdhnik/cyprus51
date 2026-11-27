@@ -3,6 +3,21 @@ import { sb } from './supa.js';
 import { field, setError, banner, busy, esc } from './ui.js';
 import { SEASON } from '../config.js';
 import { combobox, countryNames } from './combobox.js';
+import { parseGpx } from './data.js';
+
+// Course GPX of the race abroad lives in storage: gpx/<user id>/abroad-course.gpx
+const cache = new Map();
+export function planCourse(plan) {
+  if (!plan?.course_gpx) return Promise.resolve(null);
+  const key = plan.course_gpx + plan.updated_at;
+  if (!cache.has(key)) {
+    cache.set(key, sb.storage.from('gpx').download(plan.course_gpx)
+      .then(({ data, error }) => { if (error) throw error; return data.text(); })
+      .then(parseGpx));
+  }
+  return cache.get(key);
+}
+const kmText = (c) => `${c.km.toFixed(1)} km · ${c.gain} m climb`;
 
 // European date: DD.MM.YYYY on screen, YYYY-MM-DD in the database.
 const toEu = (iso) => (iso ? iso.split('-').reverse().join('.') : '');
@@ -38,6 +53,16 @@ export function openAbroad(plan, onSaved) {
         ${field({ name: 'race_date', label: 'Race date', inputmode: 'numeric', placeholder: 'DD.MM.YYYY', value: toEu(plan?.race_date) })}
         ${field({ name: 'country', label: 'Country', placeholder: 'Start typing, e.g. Spain', value: plan?.country || '' })}
       </div>
+      <div class="c51-field gpxpick" data-field="gpx">
+        <div class="gpxpick__box">
+          <span class="gpxpick__icon" aria-hidden="true"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-6 4 4 3-4 6 6"/><path d="M3 21h18"/></svg></span>
+          <div class="gpxpick__txt"><p class="gpxpick__label">Course GPX · optional</p><p class="gpxpick__value" data-gpx-value></p></div>
+          <label class="c51-btn c51-btn--secondary c51-btn--sm gpxpick__btn"><span data-gpx-btn></span><input type="file" name="gpx" accept=".gpx,application/gpx+xml" class="sr-only"></label>
+          <button type="button" class="gpxpick__x" data-gpx-remove aria-label="Remove the course file" title="Remove">×</button>
+        </div>
+        <p class="c51-field__hint">From the race website, Strava or Garmin. Draws the elevation profile.</p>
+        <p class="c51-field__error" id="err-gpx" hidden></p>
+      </div>
       ${field({ name: 'website', label: 'Race website · optional', type: 'url', inputmode: 'url', placeholder: 'https://', value: plan?.website || '', required: false })}
     </div>
     <div class="c51-dialog__actions sheet__actions">
@@ -49,6 +74,33 @@ export function openAbroad(plan, onSaved) {
   f.race_name.maxLength = 80;
   f.website.maxLength = 300;
   const country = combobox(f.country, countryNames());
+
+  // Course file: keep the old one, replace it with a new one, or remove it.
+  let gpx = { keep: !!plan?.course_gpx, text: null, info: '' };
+  const gv = f.querySelector('[data-gpx-value]'), gb = f.querySelector('[data-gpx-btn]'), gx = f.querySelector('[data-gpx-remove]');
+  const paint = () => {
+    const has = gpx.keep || gpx.text;
+    gv.textContent = gpx.text ? gpx.info : gpx.keep ? (gpx.info || 'Course added') : 'No file yet';
+    gv.classList.toggle('is-empty', !has);
+    gb.textContent = has ? 'Replace' : 'Choose file';
+    gx.hidden = !has;
+  };
+  if (gpx.keep) planCourse(plan).then((c) => { if (c && gpx.keep && !gpx.text) { gpx.info = kmText(c); paint(); } }).catch(() => {});
+  paint();
+  f.gpx.addEventListener('change', async () => {
+    const file = f.gpx.files[0];
+    f.gpx.value = '';
+    setError(f, 'gpx', '');
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return setError(f, 'gpx', 'The file is over 5 MB. Export the route without extra data.');
+    let c = null, text = '';
+    try { text = await file.text(); c = parseGpx(text); } catch { /* not XML */ }
+    if (!c || c.pts.length < 20) return setError(f, 'gpx', 'This is not a GPX route. Export the course as a .gpx file.');
+    if (c.km < 15 || c.km > 30) return setError(f, 'gpx', `This route is ${c.km.toFixed(1)} km. Add the half marathon course, about 21 km.`);
+    gpx = { keep: false, text, info: `${file.name} · ${kmText(c)}` };
+    paint();
+  });
+  gx.addEventListener('click', () => { gpx = { keep: false, text: null, info: '' }; setError(f, 'gpx', ''); paint(); });
   // Type digits, the dots appear by themselves: 14022027 → 14.02.2027
   f.race_date.addEventListener('input', () => {
     const d = f.race_date.value.replace(/\D/g, '').slice(0, 8);
@@ -58,6 +110,7 @@ export function openAbroad(plan, onSaved) {
   dlg.querySelector('[data-remove]')?.addEventListener('click', async (e) => {
     const done = busy(e.currentTarget, 'Removing…');
     const { error } = await sb.from('abroad_plans').delete().eq('user_id', plan.user_id);
+    if (!error && plan.course_gpx) await sb.storage.from('gpx').remove([plan.course_gpx]);
     done();
     if (error) { f.querySelector('.form-msg').innerHTML = banner('error', '', 'Could not remove it. Try again in a minute.'); return; }
     dlg.close(); onSaved?.();
@@ -76,7 +129,17 @@ export function openAbroad(plan, onSaved) {
     if (/^http:/.test(v.website)) v.website = v.website.replace(/^http:/, 'https:');
     if (first) return first.focus();
     const done = busy(f.querySelector('[type=submit]'), 'Saving…');
-    const { error } = await sb.from('abroad_plans').upsert({ ...v, website: v.website || null, updated_at: new Date().toISOString() });
+    const { data: { session } } = await sb.auth.getSession();
+    const path = `${session.user.id}/abroad-course.gpx`;
+    let course_gpx = gpx.keep ? plan.course_gpx : null;
+    if (gpx.text) {
+      const up = await sb.storage.from('gpx').upload(path, new Blob([gpx.text], { type: 'application/gpx+xml' }), { upsert: true, contentType: 'application/gpx+xml' });
+      if (up.error) { done(); f.querySelector('.form-msg').innerHTML = banner('error', '', 'Could not upload the course file. Try again, or save without it.'); return; }
+      course_gpx = path;
+    } else if (!gpx.keep && plan?.course_gpx) {
+      await sb.storage.from('gpx').remove([plan.course_gpx]);
+    }
+    const { error } = await sb.from('abroad_plans').upsert({ ...v, website: v.website || null, course_gpx, updated_at: new Date().toISOString() });
     done();
     if (error) { f.querySelector('.form-msg').innerHTML = banner('error', '', `Could not save. ${esc(error.message)}`); return; }
     dlg.close(); onSaved?.();
