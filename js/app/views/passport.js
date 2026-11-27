@@ -163,7 +163,7 @@ export async function passport(root, { state, flash }) {
   const rows = races.map((r) => {
     const s = subs.get(r.id);
     const st = s ? s.status : 'none';
-    const isNext = next && r.id === next.id;
+    const isNext = planNext ? !!r.abroad : next && r.id === next.id;
     const detail = st === 'verified' ? fmtTime(s.official_time_s) : st === 'pending' ? 'In review' : st === 'checked_in' ? fmtTime(s.watch_time_s) : st === 'rejected' ? 'Fix result' : isNext ? 'Next up' : r.abroad && plan ? 'Planned' : '—';
     const img = stampImg(r.stamp, st === 'verified' || st === 'pending');
     const op = st === 'pending' ? .45 : 1;

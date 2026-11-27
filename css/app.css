@@ -64,7 +64,7 @@ h1:focus { outline: none; }
 .c51-check.is-error .c51-check__label { color: var(--error); }
 
 /* ── Signed-in shell ────────────────────────────────── */
-.app { min-height: 100vh; display: flex; flex-direction: column; border-top: 6px solid var(--orange-500); }
+.app { min-height: 100vh; overflow-x: clip; display: flex; flex-direction: column; border-top: 6px solid var(--orange-500); }
 .app__head { display: flex; align-items: center; justify-content: space-between; gap: 16px; width: 100%; max-width: var(--content-max); height: 80px; margin: 0 auto; padding: 0 clamp(20px, 4vw, 48px); }
 .app__nav { display: flex; align-items: center; gap: 16px; }
 .app__link { font-weight: 600; font-size: 15px; }
@@ -510,3 +510,9 @@ h1:focus { outline: none; }
 .sheet .c51-dialog__body { grid-template-columns: minmax(0, 1fr); }
 .sheet .c51-field, .gpxpick__box { min-width: 0; }
 @media (max-width: 560px) { .gpxpick__box { flex-wrap: wrap; } .gpxpick__txt { flex: 1 1 calc(100% - 56px); } .gpxpick__btn { margin-left: 52px; } }
+
+/* Sticky header: a full-width page-coloured strip behind it; a hairline once the page scrolls */
+.app__head { position: sticky; top: 0; z-index: 30; }
+.app__head::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: 50%; width: 100vw; transform: translateX(-50%); background: var(--ivory); border-bottom: 1px solid transparent; transition: border-color .2s; }
+.app__head.is-stuck::before { border-bottom-color: rgba(13,20,18,.08); }
+html { scroll-padding-top: 96px; }

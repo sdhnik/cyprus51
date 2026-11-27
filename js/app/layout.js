@@ -68,3 +68,8 @@ document.addEventListener('keydown', (e) => {
   else if (e.key === 'ArrowUp') { e.preventDefault(); items[(i - 1 + items.length) % items.length].focus(); }
   else if (e.key === 'Tab') toggle(list.previousElementSibling, list, false, false);
 });
+
+// Hairline under the sticky header once the page is scrolled.
+addEventListener('scroll', () => {
+  document.querySelector('.app__head')?.classList.toggle('is-stuck', scrollY > 4);
+}, { passive: true });
