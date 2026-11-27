@@ -725,8 +725,9 @@ html { scroll-padding-top: 110px; }
   .rc-facts--3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .rc-done__time .num { font-size: 64px; }
   .rc-sk { height: 220px; }
+  .rc-result-on { order: -3; }
+  .rc-course { order: -2; }
   .rc-target { order: -1; }
-  .rc-result-on { order: -2; }
 }
 .rc-hero__actions .c51-btn:disabled { opacity: 1; background: #2a312f; color: #8a918e; box-shadow: none; }
 .rc-photo__btns .c51-btn { text-transform: uppercase; letter-spacing: .02em; }
