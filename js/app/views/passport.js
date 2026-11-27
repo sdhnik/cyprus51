@@ -122,7 +122,7 @@ export async function passport(root, { state, flash }) {
   if (!abroadDone) {
     const planDays = plan ? daysUntil(new Date(plan.race_date + 'T00:00:00'), now) : null;
     CH.push(plan
-      ? { kind: 'Race abroad', icon: ICON.globe, title: `Run ${plan.race_name}`, text: `${plan.country} · ${dayShort(plan.race_date)}. Your sixth stamp.`, tlabel: planDays > 0 ? 'Days to race' : 'Race day', target: planDays > 0 ? String(planDays) : dayShort(plan.race_date).toUpperCase(), edit: true, unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) }
+      ? { kind: 'Race abroad', icon: ICON.globe, title: plan.race_name.length > 22 ? plan.race_name : `Run ${plan.race_name}`, text: `${plan.country} · ${dayShort(plan.race_date)}. Your sixth stamp.`, tlabel: planDays > 0 ? 'Days to race' : 'Race day', target: planDays > 0 ? String(planDays) : dayShort(plan.race_date).toUpperCase(), edit: true, unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) }
       : { kind: 'Race abroad', icon: ICON.globe, title: 'Add your race abroad', text: `Entered a half abroad? Add it to your ${data.season} calendar.`, tlabel: 'Stamp 6', target: 'Not added yet', muted: true, add: true, unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) });
   }
 
@@ -230,7 +230,7 @@ export async function passport(root, { state, flash }) {
     const card = root.querySelector('.ps-ch');
     const body = card.querySelector('[data-ch="body"]');
     body.innerHTML = CH.map((ch, n) => `<div class="ps-ch__slide" data-slide="${n}">
-        <div class="ps-ch__top"><div class="ps-ch__title"><span class="ps-ch__icon">${svgIcon(ch.icon, 28)}</span><h2 class="h2"${n === 0 ? ' id="goal-title"' : ''}>${esc(ch.title)}</h2></div><p class="ps-ch__text">${esc(ch.text)}</p></div>
+        <div class="ps-ch__top"><div class="ps-ch__title"><span class="ps-ch__icon">${svgIcon(ch.icon, 28)}</span><h2 class="h2"${n === 0 ? ' id="goal-title"' : ''} title="${esc(ch.title)}">${esc(ch.title)}</h2></div><p class="ps-ch__text">${esc(ch.text)}</p></div>
         <div class="ps-ch__result">
           ${ch.progress ? progress(ch.progress[0], ch.progress[1], ch.progress[2], ch.title) : ''}
           ${ch.target ? `<div class="ps-ch__target"><div><p class="ps-ch__tlabel">${esc(ch.tlabel)}</p><p class="num ps-ch__tvalue${ch.small ? ' is-small' : ''}${ch.muted ? ' is-muted' : ''}">${esc(ch.target)}</p></div>${ch.cta ? `<a href="${ch.cta}" class="ps-ch__cta" aria-label="Plan ${esc(nextName)} with this target" title="Plan this race">${svgIcon(ICON.arrow, 20)}</a>` : ''}${ch.edit ? `<button type="button" class="ps-ch__cta" data-abroad aria-label="Edit your race abroad" title="Edit race">${svgIcon(ICON.edit, 18)}</button>` : ''}${ch.add ? `<button type="button" class="ps-ch__add" data-abroad>${svgIcon(ICON.plus, 18)}Add race</button>` : ''}</div>` : ''}

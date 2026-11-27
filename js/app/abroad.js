@@ -46,6 +46,8 @@ export function openAbroad(plan, onSaved) {
     </div>
   </form>`;
   const f = dlg.querySelector('form');
+  f.race_name.maxLength = 80;
+  f.website.maxLength = 300;
   const country = combobox(f.country, countryNames());
   // Type digits, the dots appear by themselves: 14022027 → 14.02.2027
   f.race_date.addEventListener('input', () => {
