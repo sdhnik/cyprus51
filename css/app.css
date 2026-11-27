@@ -478,8 +478,8 @@ h1:focus { outline: none; }
 
 /* Searchable select */
 .cb { position: relative; }
-.cb-list { position: absolute; left: 0; right: 0; z-index: 5; max-height: 240px; overflow-y: auto; margin: 4px 0 0; padding: 4px; list-style: none; background: var(--white); border: 1px solid var(--border-field); border-radius: var(--radius-md); box-shadow: 0 12px 32px rgba(13,20,18,.14); }
+.cb-list { position: absolute; left: 0; right: 0; z-index: 5; max-height: calc(4 * 42px + 8px); overflow-y: auto; margin: 4px 0 0; padding: 4px; list-style: none; background: var(--white); border: 1px solid var(--border-field); border-radius: var(--radius-md); box-shadow: 0 12px 32px rgba(13,20,18,.14); }
 .cb-list[hidden] { display: none; }
-.cb-list [role=option] { padding: 10px 12px; border-radius: 6px; font-size: 15px; cursor: pointer; }
+.cb-list [role=option] { height: 42px; box-sizing: border-box; display: flex; align-items: center; padding: 0 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; border-radius: 6px; font-size: 15px; cursor: pointer; }
 .cb-list [role=option]:hover, .cb-list [aria-selected="true"] { background: var(--orange-50); }
 .cb-none { padding: 10px 12px; font-size: 14px; color: var(--text-secondary); }
