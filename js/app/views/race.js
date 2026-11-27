@@ -4,7 +4,7 @@ import { sb } from '../supa.js';
 import { appShell } from '../layout.js';
 import { esc, icon, field, setError, banner, busy, wireTime, stravaLink } from '../ui.js';
 import { raceDate, formatRaceDate, daysUntil, stampImg, course, fmtTime, parseTime, asset } from '../data.js';
-import { loadSeason, HALF_KM, SUB130, badgeImg } from '../model.js';
+import { loadSeason, HALF_KM, SUB130, badgeImg, offlineNote } from '../model.js';
 import { planCourse, openAbroad } from '../abroad.js';
 import { combobox, countryNames } from '../combobox.js';
 import { routeSvg, elevationSvg } from '../course.js';
@@ -44,7 +44,8 @@ async function load(state, id) {
   const abroad = id === 'abroad';
   const r = abroad ? m.abroad : m.cyprus.find((x) => x.id === id);
   if (!r) return { m, r: null };
-  const { data: sub, error } = await sb.from('submissions').select('*').eq('user_id', state.session.user.id).eq('race_id', r.id).maybeSingle();
+  let { data: sub, error } = m.offline ? { data: m.subs.get(r.id) || null } : await sb.from('submissions').select('*').eq('user_id', state.session.user.id).eq('race_id', r.id).maybeSingle();
+  if (error && isOffline(error)) ({ data: sub, error } = { data: m.subs.get(r.id) || null });
   if (error) throw error;
   const plan = m.plan;
   const n = abroad ? 6 : m.cyprus.indexOf(r) + 1;
@@ -152,7 +153,7 @@ export async function race(root, { state, args, flash }) {
     body = `<div class="rc-grid"><div class="rc-col">${courseCard}${resultCard}</div><div class="rc-col">${targetCard(m)}</div></div>`;
   }
   const back = `<a class="back" href="#/passport">${icon('back')}Passport</a>`;
-  root.innerHTML = appShell(`${flash || ''}${back}${hero}${showCheckIn ? checkInCard(x) : ''}${body}`);
+  root.innerHTML = appShell(`${flash || ''}${offlineNote(m)}${back}${hero}${showCheckIn ? checkInCard(x) : ''}${body}`);
 
   root.querySelector('[data-abroad]')?.addEventListener('click', () => openAbroad(x.plan, () => render()));
   root.querySelector('[data-retry]')?.addEventListener('click', async (e) => {

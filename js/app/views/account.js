@@ -3,9 +3,10 @@ import { sb } from '../supa.js';
 import { appShell } from '../layout.js';
 import { field, setError, banner, busy, esc, icon, wireReveal, initials } from '../ui.js';
 import { loadProfile } from '../state.js';
-import { go } from '../router.js';
+import { go, render } from '../router.js';
+import { installSection, wireInstall } from '../install.js';
 
-const SECTIONS = [['details', 'Account details'], ['password', 'Change password'], ['delete', 'Delete account']];
+const SECTIONS = [['details', 'Account details'], ['password', 'Change password'], ['install', 'Install app'], ['delete', 'Delete account']];
 
 export async function account(root, { state, flash, args }) {
   const email = state.session.user.email;
@@ -14,7 +15,7 @@ export async function account(root, { state, flash, args }) {
     <h1 class="page-title">Account</h1>
     <div class="acc">
       <nav class="acc__nav" aria-label="Account sections">
-        ${SECTIONS.slice(0, 2).map(([id, label]) => `<a href="#/account/${id}" data-sec="${id}">${label}</a>`).join('')}
+        ${SECTIONS.slice(0, 3).map(([id, label]) => `<a href="#/account/${id}" data-sec="${id}">${label}</a>`).join('')}
         ${state.profile?.is_admin ? `<a href="#/admin">Review results</a>` : ''}
         <a href="#/account/delete" data-sec="delete" class="is-danger">Delete account</a>
         <button type="button" class="acc__logout" data-logout>Log out</button>
@@ -40,6 +41,7 @@ export async function account(root, { state, flash, args }) {
             <div><button class="c51-btn c51-btn--dark" type="submit">Update password</button></div>
           </form>
         </section>
+        ${installSection()}
         <div class="acc__mobile">
           ${state.profile?.is_admin ? `<a class="c51-btn c51-btn--secondary" href="#/admin">Review results</a>` : ''}
           <button type="button" class="c51-btn c51-btn--secondary" data-logout>Log out</button>
@@ -87,6 +89,7 @@ export async function account(root, { state, flash, args }) {
   // Password: check the current one first, then set the new one.
   const fp = root.querySelector('#f-password');
   wireReveal(fp);
+  wireInstall(root.querySelector('#install'), () => render());
   fp.addEventListener('submit', async (e) => {
     e.preventDefault();
     const msg = fp.querySelector('.form-msg');

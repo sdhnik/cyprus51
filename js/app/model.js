@@ -1,6 +1,7 @@
 // Everything the passport and the achievement pages know about a runner's season.
 import { today, state } from './state.js';
 import { sb } from './supa.js';
+import { isOffline } from './outbox.js';
 import { loadRaces, raceDate, daysUntil, fmtTime, asset } from './data.js';
 
 export const HALF_KM = 21.0975;
@@ -10,15 +11,37 @@ export const badgeImg = (slug, earned) => asset(`assets/achievements/${slug}-${e
 export async function loadSeason() {
   // Always the signed-in runner's own rows: an admin can read everyone's.
   const uid = state.session.user.id;
+  const key = `c51-season-${uid}`;
+  if (!navigator.onLine) {                       // skip the network (and its retries) without signal
+    const saved = readSaved(key);
+    if (saved) return Object.assign(model(await loadRaces(), saved.subs, saved.comm, saved.plan, today()), { offline: true, savedAt: saved.at });
+  }
   const [data, subsRes, commRes, planRes] = await Promise.all([
     loadRaces(),
-    sb.from('submissions').select('race_id, status, watch_time_s, official_time_s, place, place_of').eq('user_id', uid),
+    sb.from('submissions').select('*').eq('user_id', uid),
     sb.rpc('community_stats'),
     sb.from('abroad_plans').select('*').eq('user_id', uid).maybeSingle(),
   ]);
-  if (subsRes.error) throw subsRes.error;
-  return model(data, subsRes.data, commRes.error ? null : commRes.data, planRes.error ? null : planRes.data, today());
+  if (subsRes.error) {
+    // No signal (at the finish line): show the season as it was last time.
+    const saved = isOffline(subsRes.error) && readSaved(key);
+    if (!saved) throw subsRes.error;
+    const m = model(data, saved.subs, saved.comm, saved.plan, today());
+    return Object.assign(m, { offline: true, savedAt: saved.at });
+  }
+  const comm = commRes.error ? null : commRes.data, plan = planRes.error ? null : planRes.data;
+  try { localStorage.setItem(key, JSON.stringify({ subs: subsRes.data, comm, plan, at: new Date().toISOString() })); } catch { /* full or blocked */ }
+  return model(data, subsRes.data, comm, plan, today());
 }
+
+function readSaved(key) {
+  try { return JSON.parse(localStorage.getItem(key)); } catch { return null; }
+}
+
+// Banner for screens built from the saved season.
+export const offlineNote = (m) => (m.offline
+  ? `<div class="c51-banner c51-banner--pending" role="status"><div class="c51-banner__text"><p class="c51-banner__title">You’re offline</p><p>Showing your passport as it was ${new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(m.savedAt)).replace(',', '')}. Check-ins are saved on this phone and sent when you’re back online.</p></div></div>`
+  : '');
 
 export function model(data, rows, community, plan = null, now = new Date()) {
   const subs = new Map(rows.map((s) => [s.race_id, s]));

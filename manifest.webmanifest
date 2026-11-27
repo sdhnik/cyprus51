@@ -3,7 +3,7 @@
   "short_name": "Cyprus 5+1",
   "description": "Six half marathons, one passport. Collect a stamp in every Cyprus city and one abroad.",
   "id": "./",
-  "start_url": "./?source=pwa",
+  "start_url": "./app/?source=pwa",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f8f7f4",

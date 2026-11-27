@@ -53,7 +53,7 @@ export async function admin(root, { state }) {
       const r = raceLabel(s), v = s.official_time_s ? vsPb(s) : null, on = s.id === sel;
       const tag = r.abroad ? 'ABROAD' : tab !== 'pending' ? '' : v?.first ? 'FIRST RESULT' : v?.pb ? 'NEW PB' : '';
       return `<button type="button" class="adm-row${on ? ' is-on' : ''}" data-id="${s.id}" aria-current="${on}">
-        <span class="adm-row__who"><span class="adm-row__name">${esc(s.runner_name)}</span><span class="adm-row__meta">${esc(r.name)} · ${esc(ago(s.submitted_at || s.updated_at))}</span></span>
+        <span class="adm-row__who"><span class="adm-row__name">${esc(s.runner_name)}${s.runner_is_test ? '<span class="adm-test">Test</span>' : ''}</span><span class="adm-row__meta">${esc(r.name)} · ${esc(ago(s.submitted_at || s.updated_at))}</span></span>
         <span class="adm-row__end"><span class="num">${esc(fmtTime(s.official_time_s))}</span>${tag ? `<span class="adm-row__tag${r.abroad ? ' is-abroad' : ''}">${tag}</span>` : ''}</span>
       </button>`;
     }).join('');
@@ -66,7 +66,7 @@ export async function admin(root, { state }) {
       const att = [cur.photo_path ? 'Finish photo (private)' : '', cur.gpx_path ? `<button type="button" class="adm-link" data-gpx="${esc(cur.gpx_path)}">Course GPX ${icon('ext', 14)}</button>` : ''].filter(Boolean).join('<br>') || 'None';
       const url = cur.result_url || '';
       detail = `<div class="adm-d">
-        <div class="adm-d__head"><div><h2 class="h2 adm-d__name">${esc(cur.runner_name)}</h2><p class="adm-d__sub">${esc(cur.runner_email)} · submitted ${esc(ago(cur.submitted_at))}</p></div><span class="adm-d__race">${esc(r.name)}${r.date ? ` · ${esc(r.date)}` : ''}</span></div>
+        <div class="adm-d__head"><div><h2 class="h2 adm-d__name">${esc(cur.runner_name)}${cur.runner_is_test ? '<span class="adm-test">Test account</span>' : ''}</h2><p class="adm-d__sub">${esc(cur.runner_email)} · submitted ${esc(ago(cur.submitted_at))}</p></div><span class="adm-d__race">${esc(r.name)}${r.date ? ` · ${esc(r.date)}` : ''}</span></div>
         <div class="adm-d__time"><div><p class="lbl">Claimed finish time</p><p class="num">${esc(fmtTime(cur.official_time_s))}</p></div><span class="adm-d__vs${v.pb ? ' is-pb' : ''}">${esc(v.text)}</span></div>
         <div class="adm-d__facts">
           <div><p class="lbl">Bib</p><p>${esc(cur.bib || 'Not given')}</p></div>

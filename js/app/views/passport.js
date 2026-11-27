@@ -3,8 +3,9 @@ import { appShell } from '../layout.js';
 import { esc, icon, stravaLink } from '../ui.js';
 import { STRAVA_CLUB_URL } from '../../config.js';
 import { raceDate, formatRaceDate, daysUntil, checkInOpen, seasonEnd, stampImg, course, profilePath, fmtTime, asset } from '../data.js';
-import { loadSeason, HALF_KM, SUB130, badgeImg } from '../model.js';
+import { loadSeason, HALF_KM, SUB130, badgeImg, offlineNote } from '../model.js';
 import { openAbroad, planCourse } from '../abroad.js';
+import { installCard, wireInstall } from '../install.js';
 
 let focusAbroad = false;
 import { render } from '../router.js';
@@ -255,7 +256,7 @@ export async function passport(root, { state, flash }) {
     <ul class="ps-awards__list">${badges.map((b) => `<li><a class="ps-badge" href="#/achievement/${b.slug}"><img src="${b.img}" alt=""><div class="ps-badge__text"><span class="num ps-badge__name">${b.name}</span>${progress(b.v, b.max, b.cap, b.name)}</div></a></li>`).join('')}</ul>
   </section>`;
 
-  root.innerHTML = appShell(`${flash || ''}${raceDayCard}${hero}
+  root.innerHTML = appShell(`${flash || ''}${offlineNote(m)}${raceDayCard}<div data-inst-slot></div>${hero}
     <div class="ps-row">${nextCard}${challengeCard}</div>
     ${season}
     <div class="ps-row">${results}${community}</div>
@@ -299,6 +300,17 @@ export async function passport(root, { state, flash }) {
 
   // Race abroad dialog
   root.querySelectorAll('[data-abroad]').forEach((b) => b.addEventListener('click', () => openAbroad(plan, () => { focusAbroad = true; render(); })));
+
+  // Install prompt: now, or as soon as the browser says the app can be installed
+  const instId = planNext ? 'abroad' : next?.id, instDays = planNext ? daysUntil(new Date(planNext.race_date + 'T00:00:00'), now) : nextDays;
+  const fillInstall = () => {
+    const slot = root.querySelector('[data-inst-slot]');
+    if (!slot || slot.firstChild) return;
+    slot.innerHTML = installCard(instId, instDays);
+    wireInstall(slot);
+  };
+  fillInstall();
+  addEventListener('c51:installable', fillInstall, { once: true });
 
   // Invite a friend
   root.querySelector('[data-invite]')?.addEventListener('click', async (e) => {

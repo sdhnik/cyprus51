@@ -58,3 +58,33 @@ as $$
     )
   ) end;
 $$;
+
+-- Review queue: tell test accounts apart (adds runner_is_test)
+create or replace function public.admin_submissions(p_status public.submission_status)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+begin
+  if not public.is_admin() then
+    raise exception 'Admins only';
+  end if;
+  return coalesce((
+    select jsonb_agg(row_to_json(x) order by x.submitted_at nulls last, x.updated_at)
+    from (
+      select s.*, p.display_name as runner_name, u.email as runner_email, p.is_test as runner_is_test,
+        (select coalesce(jsonb_agg(jsonb_build_object('race_id', v.race_id, 'time', v.official_time_s) order by v.submitted_at), '[]'::jsonb)
+           from public.submissions v
+          where v.user_id = s.user_id and v.status = 'verified' and v.id <> s.id) as history
+      from public.submissions s
+      join public.profiles p on p.id = s.user_id
+      join auth.users u on u.id = s.user_id
+      where s.status = p_status
+      order by s.submitted_at nulls last
+      limit 200
+    ) x
+  ), '[]'::jsonb);
+end;
+$$;

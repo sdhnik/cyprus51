@@ -7,6 +7,7 @@ import { home } from './views/home.js';
 import { achievement } from './views/achievement.js';
 import { admin } from './views/admin.js';
 import { race } from './views/race.js';
+import './install.js';
 import { esc, icon } from './ui.js';
 import { appShell } from './layout.js';
 import { state, loadProfile } from './state.js';
@@ -67,8 +68,8 @@ onRender(async (name, r, args) => {
     console.error(e);
     const body = `<section class="page-error">
       <p class="ps-eyebrow">ERROR</p>
-      <h1 class="page-error__title">Something went wrong.</h1>
-      <p class="page-error__text">It’s on our side, and nothing is lost. Try again in a minute.</p>
+      <h1 class="page-error__title">${navigator.onLine ? 'Something went wrong.' : 'You’re offline.'}</h1>
+      <p class="page-error__text">${navigator.onLine ? 'It’s on our side, and nothing is lost. Try again in a minute.' : 'This page needs a connection the first time. Open it again when you have signal.'}</p>
       <div class="page-error__actions">
         <button type="button" class="c51-btn c51-btn--primary" onclick="location.reload()">Try again</button>
         <a class="c51-btn c51-btn--secondary" href="#/${state.session ? 'passport' : ''}">${state.session ? 'Back to your passport' : 'Home'}</a>
@@ -91,7 +92,12 @@ async function start() {
   sb.auth.onAuthStateChange((event, session) => {
     state.session = session;
     if (event === 'PASSWORD_RECOVERY') recovery = true;
-    if (event === 'SIGNED_OUT') { state.profile = null; go(''); }
+    if (event === 'SIGNED_OUT') {
+      state.profile = null;
+      // The offline copy of the passport goes with the session; unsent check-ins stay until they are sent.
+      try { Object.keys(localStorage).filter((k) => /^c51-(season|profile)-/.test(k)).forEach((k) => localStorage.removeItem(k)); } catch { /* blocked */ }
+      go('');
+    }
     else if (session && state.profile && state.profile.id !== session.user.id) { state.profile = null; render(); }
   });
 
@@ -118,3 +124,8 @@ async function start() {
 }
 
 start();
+
+// Offline support: the service worker sits at the site root, so it serves the app and the pages around it.
+if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.hostname === '127.0.0.1')) {
+  addEventListener('load', () => navigator.serviceWorker.register(new URL('../../sw.js', import.meta.url), { scope: new URL('../../', import.meta.url).pathname }).catch(() => {}));
+}
