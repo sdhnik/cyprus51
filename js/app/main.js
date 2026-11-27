@@ -53,7 +53,9 @@ route('race', race, { user: true });
 
 onRender(async (name, r, args) => {
   state.session = (await sb.auth.getSession()).data.session;   // local read, no network
-  if (state.session && !state.profile) await loadProfile();
+  // Reload the profile when the signed-in user changed (another tab, log out and in).
+  if (state.session && state.profile?.id !== state.session.user.id) await loadProfile();
+  if (!state.session) state.profile = null;
   if (!r) return go(state.session ? 'passport' : '');
   if (r.user && !state.session) return go('login');
   if (r.guest && state.session && name !== 'link-problem') return go('passport');
@@ -90,6 +92,7 @@ async function start() {
     state.session = session;
     if (event === 'PASSWORD_RECOVERY') recovery = true;
     if (event === 'SIGNED_OUT') { state.profile = null; go(''); }
+    else if (session && state.profile && state.profile.id !== session.user.id) { state.profile = null; render(); }
   });
 
   const { data } = await sb.auth.getSession();   // also finishes the login from an email link

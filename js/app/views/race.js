@@ -53,7 +53,7 @@ async function load(state, id) {
   const date = abroad ? (iso ? { tbc: false, start: isoDay(iso) } : null) : raceDate(r);
   const toRace = date && !date.tbc ? daysUntil(date.start, m.now) : null;
   const st = sub ? sub.status : 'none';
-  const q = !sub && queued(r.id);
+  const q = !sub && queued(r.id, state.session.user.id);
   return {
     m, r, sub, st, q, plan, abroad, n, name, date, toRace,
     website: abroad ? (plan?.website || '') : r.website,
@@ -429,7 +429,7 @@ function wireCheckIn(root, x) {
     } catch (error) {
       done();
       if (isOffline(error)) {
-        enqueue({ ...row, photo: photo.blob ? await toDataUrl(photo.blob) : null });
+        enqueue({ ...row, uid: x.uid, photo: photo.blob ? await toDataUrl(photo.blob) : null });
         go(`race/${x.abroad ? 'abroad' : x.r.id}`, { flash: banner('pending', 'Saved on your phone', 'No signal at the finish. Your check-in goes out by itself when you’re back online.') });
       } else {
         f.querySelector('.form-msg').innerHTML = banner('error', 'Could not check in', esc(error.message || 'Try again in a minute.'));
