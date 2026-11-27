@@ -52,11 +52,11 @@ export async function achievement(root, { state, args }) {
   const rows = list.map((r, i) => {
     const s = subs.get(r.id);
     const st = s ? s.status : 'none';
-    const detail = st === 'verified' ? fmtTime(s.official_time_s) : st === 'pending' ? 'In review' : st === 'checked_in' ? fmtTime(s.watch_time_s) : '—';
+    const detail = st === 'verified' ? fmtTime(s.official_time_s) : st === 'pending' ? fmtTime(s.official_time_s || s.watch_time_s) : st === 'checked_in' ? fmtTime(s.watch_time_s) : '';
     const img = stampImg(r.stamp, st === 'verified' || st === 'pending');
     return `<a class="ach-row" href="${r.abroad ? '#/race/abroad' : `#/race/${r.id}`}">
       <img src="${img}" alt="" style="opacity:${st === 'pending' ? .5 : 1}">
-      <span class="ach-row__text"><span class="num ach-row__city">${esc(r.city)}</span><span class="ach-row__date">${esc(r.abroad ? 'Any race abroad' : formatRaceDate(r))}</span></span>
+      <span class="ach-row__text"><span class="num ach-row__city">${esc(r.city)}</span><span class="ach-row__date">${esc(r.abroad ? (r.plan ? `${new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(r.plan.race_date + 'T00:00:00')).replace(',', '')} · ${r.plan.country}` : 'Any race abroad') : formatRaceDate(r))}</span></span>
       <span class="ach-row__end">${chip(st)}<span class="ach-row__detail">${esc(detail)}</span></span>
     </a>`;
   }).join('');
@@ -71,7 +71,8 @@ export async function achievement(root, { state, args }) {
   // Where runners are
   const c = m.community;
   let where = '';
-  if (c && c.runners) {
+  // Stamps say nothing about a time-based badge, so those pages skip this card.
+  if (c && c.runners && !['personal-best', 'sub-1-30-elite'].includes(b.slug)) {
     const mine = Math.min(c.my_stamps ?? m.nV, 6);
     const ahead = c.dist.slice(mine + 1).reduce((a, n) => a + n, 0);
     const maxN = Math.max(...c.dist, 1);

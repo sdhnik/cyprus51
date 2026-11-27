@@ -6,7 +6,8 @@ import { account } from './views/account.js';
 import { home } from './views/home.js';
 import { achievement } from './views/achievement.js';
 import { admin } from './views/admin.js';
-import { banner, esc } from './ui.js';
+import { esc, icon } from './ui.js';
+import { appShell } from './layout.js';
 import { state, loadProfile } from './state.js';
 
 const root = document.getElementById('app');
@@ -54,7 +55,18 @@ onRender(async (name, r, args) => {
     await r.view(root, { args, state, flash });
   } catch (e) {
     console.error(e);
-    root.innerHTML = `<main class="page-error" id="main">${banner('error', 'Something went wrong on our side', 'Nothing is lost. Reload the page, or try again in a minute.')}<details class="err-details"><summary>Technical details</summary><p>${esc(e?.message || e)}</p></details><button class="c51-btn c51-btn--secondary" onclick="location.reload()">Reload</button></main>`;
+    const body = `<section class="page-error">
+      <p class="ps-eyebrow">ERROR</p>
+      <h1 class="page-error__title">Something went wrong.</h1>
+      <p class="page-error__text">It’s on our side, and nothing is lost. Try again in a minute.</p>
+      <div class="page-error__actions">
+        <button type="button" class="c51-btn c51-btn--primary" onclick="location.reload()">Try again</button>
+        <a class="c51-btn c51-btn--secondary" href="#/${state.session ? 'passport' : ''}">${state.session ? 'Back to your passport' : 'Home'}</a>
+      </div>
+      <details class="err-details"><summary>Technical details</summary><p>${esc(e?.message || e)}</p></details>
+    </section>`;
+    root.innerHTML = state.session ? appShell(body)
+      : `<div class="app"><header class="app__head"><a class="wordmark" href="#/">CYPRUS <span>5+1</span></a></header><main class="app__main" id="main">${body}</main></div>`;
   }
   const h1 = root.querySelector('h1');
   if (h1) h1.tabIndex = -1;

@@ -112,15 +112,15 @@ export function join(root) {
     ['name', 'email', 'password'].forEach((n) => setError(form, n, ''));
     form.querySelector('.form-msg').innerHTML = '';
     let first = null;
-    if (!name) first ??= setError(form, 'name', 'Enter your name.');
-    if (!emailOk(email)) first ??= setError(form, 'email', 'Enter a valid email address.');
-    if (password.length < 8) first ??= setError(form, 'password', 'Use at least 8 characters.');
-    if (first) return first.focus();
+    if (!name) { const el = setError(form, 'name', 'Enter your name.'); first ??= el; }
+    if (!emailOk(email)) { const el = setError(form, 'email', 'Enter a valid email address.'); first ??= el; }
+    if (password.length < 8) { const el = setError(form, 'password', 'Use at least 8 characters.'); first ??= el; }
     if (!form.adult.checked) {
       form.querySelector('.c51-check').classList.add('is-error');
       form.querySelector('.form-msg').innerHTML = banner('error', '', 'Confirm you are 18 or older and accept the Rules, Terms and Privacy Policy.');
-      return form.adult.focus();
+      first ??= form.adult;
     }
+    if (first) return first.focus();
     const done = busy(form.querySelector('[type=submit]'), 'Creating your passport…');
     const { data, error } = await sb.auth.signUp({
       email, password,

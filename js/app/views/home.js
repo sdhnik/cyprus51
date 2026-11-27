@@ -18,10 +18,10 @@ export function home(root, { args } = {}) {
       <div class="home__photo">
         <img src="${asset('assets/img/runner-old-town.webp')}" alt="A runner in an orange shirt on a stone street in an old Cypriot town">
         <div class="home__fade" aria-hidden="true"></div>
-        <p class="home__tag">THE FINISHER’S ATLAS / 2027</p>
+        <p class="home__tag">THE FINISHER’S ATLAS · SEASON 2027</p>
       </div>
       <div class="home__copy">
-        <p class="home__eyebrow">THE FINISHER’S ATLAS — SEASON 2027</p>
+        <p class="home__eyebrow">THE FINISHER’S ATLAS · SEASON 2027</p>
         <div>
           <h1 class="home__title">Run<br class="home__br"> beyond.</h1>
           <p class="home__badge">5+1 CHALLENGE</p>

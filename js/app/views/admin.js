@@ -30,7 +30,7 @@ export async function admin(root, { state }) {
   };
   const vsPb = (s) => {
     const prev = (s.history || []).map((h) => h.time).filter(Boolean);
-    if (!prev.length) return { text: 'First result, sets PB', pb: true };
+    if (!prev.length) return { text: 'First result, sets PB', pb: true, first: true };
     const pb = Math.min(...prev), d = s.official_time_s - pb;
     return d < 0 ? { text: `New PB, −${fmtTime(-d)}`, pb: true } : { text: `+${fmtTime(d)} vs PB`, pb: false };
   };
@@ -51,7 +51,7 @@ export async function admin(root, { state }) {
     const cur = list.find((x) => x.id === sel);
     const rows = list.map((s) => {
       const r = raceLabel(s), v = s.official_time_s ? vsPb(s) : null, on = s.id === sel;
-      const tag = r.abroad ? 'ABROAD' : v?.pb && tab === 'pending' ? 'NEW PB' : '';
+      const tag = r.abroad ? 'ABROAD' : tab !== 'pending' ? '' : v?.first ? 'FIRST RESULT' : v?.pb ? 'NEW PB' : '';
       return `<button type="button" class="adm-row${on ? ' is-on' : ''}" data-id="${s.id}" aria-current="${on}">
         <span class="adm-row__who"><span class="adm-row__name">${esc(s.runner_name)}</span><span class="adm-row__meta">${esc(r.name)} · ${esc(ago(s.submitted_at || s.updated_at))}</span></span>
         <span class="adm-row__end"><span class="num">${esc(fmtTime(s.official_time_s))}</span>${tag ? `<span class="adm-row__tag${r.abroad ? ' is-abroad' : ''}">${tag}</span>` : ''}</span>
@@ -82,7 +82,7 @@ export async function admin(root, { state }) {
           <form class="adm-d__reject" novalidate>
             <p class="lbl">Or reject with a reason</p>
             <div class="adm-d__quick">${REASONS.map((q) => `<button type="button" class="chipbtn" data-q="${esc(q)}">${esc(q)}</button>`).join('')}</div>
-            <div class="c51-field" data-field="reason"><div class="c51-field__box"><label class="c51-field__label" for="f-reason">Reason the runner will see</label><div class="c51-field__row"><input class="c51-field__input" id="f-reason" name="reason" maxlength="300" placeholder="e.g. The results page shows 1:51:41 for bib ${esc(cur.bib || '1127')}"></div></div><p class="c51-field__error" id="f-reason-err" hidden></p></div>
+            <div class="c51-field" data-field="reason"><div class="c51-field__box"><label class="c51-field__label" for="f-reason">Reason the runner will see</label><div class="c51-field__row"><textarea class="c51-field__input adm-reason" id="f-reason" name="reason" maxlength="300" rows="3" placeholder="e.g. The results page shows 1:51:41 for bib ${esc(cur.bib || '1127')}"></textarea></div></div><p class="c51-field__error" id="f-reason-err" hidden></p></div>
             <div><button type="submit" class="acc__danger">Reject</button></div>
           </form>
         </div>` : `<div class="adm-d__act">

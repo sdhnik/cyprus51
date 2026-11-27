@@ -40,7 +40,7 @@ export function model(data, rows, community, plan = null, now = new Date()) {
   const badges = [
     { slug: 'personal-best', name: 'Personal Best', v: nV ? 1 : 0, max: 1,
       cap: pb ? `${fmtTime(pb.s.official_time_s)} · ${pb.r.city}` : 'First verified race',
-      text: `Your fastest verified half marathon of the ${data.season} season. Earned with your first verified race, then beaten race by race.` },
+      text: `Your fastest verified half marathon of the ${data.season} season. Your first verified race sets it; every faster finish updates it.` },
     { slug: '5-cities-finisher', name: '5 Cities Finisher', v: nCyprusV, max: 5, cap: `${nCyprusV} of 5`,
       text: `Finish all five Cyprus half marathons in the ${data.season} season.` },
     { slug: 'international-finisher', name: 'International Finisher', v: abroadDone ? 1 : 0, max: 1, cap: abroadDone ? 'Earned' : 'Race abroad',

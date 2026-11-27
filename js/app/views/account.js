@@ -32,7 +32,7 @@ export async function account(root, { state, flash, args }) {
           </form>
         </section>
         <section class="card acc__card" id="password" aria-labelledby="pw-title">
-          <div><h2 id="pw-title" class="h2">Change password</h2><p class="acc__sub">At least 8 characters.</p></div>
+          <div><h2 id="pw-title" class="h2">Change password</h2><p class="acc__sub">Enter your current password first.</p></div>
           <form class="form acc__narrow" id="f-password" novalidate>
             <div class="form-msg" tabindex="-1"></div>
             ${field({ name: 'current', label: 'Current password', type: 'password', autocomplete: 'current-password', reveal: true })}
@@ -40,6 +40,10 @@ export async function account(root, { state, flash, args }) {
             <div><button class="c51-btn c51-btn--dark" type="submit">Update password</button></div>
           </form>
         </section>
+        <div class="acc__mobile">
+          ${state.profile?.is_admin ? `<a class="c51-btn c51-btn--secondary" href="#/admin">Review results</a>` : ''}
+          <button type="button" class="c51-btn c51-btn--secondary" data-logout>Log out</button>
+        </div>
         <section class="card acc__card" id="delete" aria-labelledby="del-title">
           <div><h2 id="del-title" class="h2">Delete account</h2><p class="acc__sub">This removes your passport, results, finish photos and GPX files. It cannot be undone.</p></div>
           <div><button type="button" class="acc__danger" id="delete-start">Delete account</button></div>

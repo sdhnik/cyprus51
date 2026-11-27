@@ -120,12 +120,12 @@ export function openAbroad(plan, onSaved) {
     const v = { race_name: f.race_name.value.trim(), race_date: fromEu(f.race_date.value), country: f.country.value.trim(), website: f.website.value.trim() };
     ['race_name', 'race_date', 'country', 'website'].forEach((n) => setError(f, n, ''));
     let first = null;
-    if (v.race_name.length < 2) first ??= setError(f, 'race_name', 'Enter the race name.');
-    if (!v.race_date) first ??= setError(f, 'race_date', 'Enter the date as DD.MM.YYYY, e.g. 14.02.2027.');
-    else if (!v.race_date.startsWith(String(SEASON))) first ??= setError(f, 'race_date', `The race has to be in ${SEASON}.`);
-    if (!country.valid()) first ??= setError(f, 'country', 'Pick a country from the list.');
+    if (v.race_name.length < 2) { const el = setError(f, 'race_name', 'Enter the race name.'); first ??= el; }
+    if (!v.race_date) { const el = setError(f, 'race_date', 'Enter the date as DD.MM.YYYY, e.g. 14.02.2027.'); first ??= el; }
+    else if (!v.race_date.startsWith(String(SEASON))) { const el = setError(f, 'race_date', `The race has to be in ${SEASON}.`); first ??= el; }
+    if (!country.valid()) { const el = setError(f, 'country', 'Pick a country from the list.'); first ??= el; }
     if (v.website && !/^https?:\/\//.test(v.website)) v.website = 'https://' + v.website;
-    if (v.website && !/^https:\/\/[^\s.]+\.[^\s]+$/.test(v.website)) first ??= setError(f, 'website', 'Enter a web address, or leave it empty.');
+    if (v.website && !/^https:\/\/[^\s.]+\.[^\s]+$/.test(v.website)) { const el = setError(f, 'website', 'Enter a web address, or leave it empty.'); first ??= el; }
     if (/^http:/.test(v.website)) v.website = v.website.replace(/^http:/, 'https:');
     if (first) return first.focus();
     const done = busy(f.querySelector('[type=submit]'), 'Saving…');

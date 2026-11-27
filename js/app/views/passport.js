@@ -10,6 +10,14 @@ import { render } from '../router.js';
 
 const dayShort = (iso) => new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso + 'T00:00:00')).replace(',', '');
 const dayLong = (iso) => new Intl.DateTimeFormat('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }).format(new Date(iso + 'T00:00:00'));
+// Long names step down in size so a word never breaks in the middle.
+function nameSize(n) {
+  const word = Math.max(...n.split(/\s+/).map((w) => w.length)), all = n.length;
+  if (word > 13 || all > 34) return ' is-xs';
+  if (word > 10 || all > 24) return ' is-s';
+  if (all > 16) return ' is-m';
+  return '';
+}
 const plural = (n, one, many = one + 's') => `${n.toLocaleString('en-GB')} ${n === 1 ? one : many}`;
 const pace = (sec) => fmtTime(Math.round(sec / HALF_KM));
 
@@ -58,14 +66,14 @@ export async function passport(root, { state, flash }) {
   const stats = [
     { label: 'Best time', value: pb ? fmtTime(pb.s.official_time_s) : '—', note: pb ? pb.r.city : 'not set yet' },
     { label: 'Avg pace', value: avg ? pace(avg) : '—', note: 'min per km' },
-    { label: 'Distance', value: (HALF_KM * nV).toFixed(1).replace(/\.0$/, nV ? '.0' : ''), note: 'km verified' },
-    { label: 'On course', value: fmtTime(times.reduce((a, b) => a + b, 0)) || '0:00', note: plural(nV, 'race') },
+    { label: 'Distance', value: nV ? (HALF_KM * nV).toFixed(1) : '—', note: 'km verified' },
+    { label: 'On course', value: nV ? fmtTime(times.reduce((a, b) => a + b, 0)) : '—', note: plural(nV, 'race') },
   ];
   const hero = `<section class="ps-hero" aria-label="Running passport">
     <img class="ps-hero__topo" src="${asset('assets/patterns/cyprus-topo.webp')}" alt="">
     <div class="ps-hero__who">
       <p class="ps-eyebrow">RUNNING PASSPORT · SEASON ${data.season}</p>
-      <h1 class="ps-hero__name">${esc(name)}</h1>
+      <h1 class="ps-hero__name${nameSize(name)}">${esc(name)}</h1>
       <div class="ps-hero__chips">${chips.map((c) => `<span>${esc(c)}</span>`).join('')}</div>
     </div>
     <div class="ps-hero__stats">${stats.map((s) => `<div class="ps-stat"><p class="ps-stat__label">${s.label}</p><p class="num ps-stat__value">${esc(s.value)}</p><p class="ps-stat__note">${esc(s.note)}</p></div>`).join('')}</div>
@@ -74,10 +82,12 @@ export async function passport(root, { state, flash }) {
   // ── Race day ───────────────────────────────────────
   const raceDayCard = raceDay ? `<section class="raceday" aria-labelledby="rd-title">
     <img class="raceday__topo" src="${asset('assets/patterns/cyprus-topo.webp')}" alt="">
-    <p class="ps-eyebrow">RACE DAY · ${esc(raceDay.city.toUpperCase())}</p>
-    <h2 id="rd-title" class="raceday__title">Finished?<br>Check in.</h2>
-    <p class="raceday__text">Takes 20 seconds. Add the official link later, when results are out.</p>
-    <a class="c51-btn c51-btn--primary" href="#/race/${raceDay.id}/checkin">I finished ${icon('arrow')}</a>
+    <div class="raceday__main">
+      <p class="ps-eyebrow">RACE DAY · ${esc(raceDay.city.toUpperCase())}</p>
+      <h2 id="rd-title" class="raceday__title">Finished?<br>Check in.</h2>
+      <p class="raceday__text">Takes 20 seconds. Add the official link later, when results are out.</p>
+    </div>
+    <a class="c51-btn c51-btn--primary raceday__btn" href="#/race/${raceDay.id}/checkin">I finished ${icon('arrow')}</a>
   </section>` : '';
 
   // ── Next up ────────────────────────────────────────
@@ -159,12 +169,16 @@ export async function passport(root, { state, flash }) {
     </div>
   </section>` : '';
 
+  // Results chart in date order: the race abroad sits at its own date (or last, if not planned).
+  const when = (r) => (r.abroad ? (plan ? new Date(plan.race_date + 'T00:00:00') : new Date(8.64e15)) : raceDate(r).start);
+  const chartRaces = [...races].sort((a, b) => when(a) - when(b));
+
   // ── Season timeline ────────────────────────────────
   const rows = races.map((r) => {
     const s = subs.get(r.id);
     const st = s ? s.status : 'none';
     const isNext = planNext ? !!r.abroad : next && r.id === next.id;
-    const detail = st === 'verified' ? fmtTime(s.official_time_s) : st === 'pending' ? 'In review' : st === 'checked_in' ? fmtTime(s.watch_time_s) : st === 'rejected' ? 'Fix result' : isNext ? 'Next up' : r.abroad && plan ? 'Planned' : '—';
+    const detail = st === 'verified' ? fmtTime(s.official_time_s) : st === 'pending' ? fmtTime(s.official_time_s || s.watch_time_s) : st === 'checked_in' ? fmtTime(s.watch_time_s) : st === 'rejected' ? 'Fix result' : isNext ? 'Next up' : r.abroad && plan ? 'Planned' : '';
     const img = stampImg(r.stamp, st === 'verified' || st === 'pending');
     const op = st === 'pending' ? .45 : 1;
     return { r, st, detail, img, op, date: r.abroad ? (plan ? `${dayShort(plan.race_date)} · ${plan.country}` : 'Any race abroad') : formatRaceDate(r), href: r.abroad ? '#/race/abroad' : `#/race/${r.id}` };
@@ -194,8 +208,8 @@ export async function passport(root, { state, flash }) {
   ];
   const results = `<section class="card ps-results" aria-labelledby="results-title">
     <div class="ps-head"><h2 id="results-title" class="h2">Your results</h2><p class="ps-head__note">${pb ? `<span class="ps-pbline"></span> Personal best ${fmtTime(pb.s.official_time_s)}` : 'No results yet'}</p></div>
-    <div class="ps-chart ps-chart--wide">${chart(races, subs, pb, 680, 280)}</div>
-    <div class="ps-chart ps-chart--narrow">${chart(races, subs, pb, 318, 240)}</div>
+    <div class="ps-chart ps-chart--wide">${chart(chartRaces, subs, pb, 680, 280)}</div>
+    <div class="ps-chart ps-chart--narrow">${chart(chartRaces, subs, pb, 318, 240)}</div>
     <div class="ps-rstats">${rStats.map(([l, v, n]) => `<div><p class="lbl">${l}</p><p class="num ps-rstats__v${v === '—' ? ' is-empty' : ''}">${esc(v)}</p><p class="ps-rstats__n">${esc(n)}</p></div>`).join('')}</div>
   </section>`;
 
@@ -234,7 +248,7 @@ export async function passport(root, { state, flash }) {
     <ul class="ps-awards__list">${badges.map((b) => `<li><a class="ps-badge" href="#/achievement/${b.slug}"><img src="${b.img}" alt=""><div class="ps-badge__text"><span class="num ps-badge__name">${b.name}</span>${progress(b.v, b.max, b.cap, b.name)}</div></a></li>`).join('')}</ul>
   </section>`;
 
-  root.innerHTML = appShell(`${flash || ''}${hero}${raceDayCard}
+  root.innerHTML = appShell(`${flash || ''}${raceDayCard}${hero}
     <div class="ps-row">${nextCard}${challengeCard}</div>
     ${season}
     <div class="ps-row">${results}${community}</div>

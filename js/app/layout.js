@@ -14,7 +14,7 @@ export function appShell(content) {
     <header class="app__head">
       <a class="wordmark" href="#/passport">CYPRUS <span>5+1</span></a>
       <div class="pmenu">
-        <button type="button" class="avatar" aria-haspopup="menu" aria-expanded="false" aria-controls="pmenu" aria-label="Account menu for ${esc(name)}">${esc(initials(name))}</button>
+        <button type="button" class="avatar" aria-haspopup="menu" aria-expanded="false" aria-controls="pmenu" aria-label="Account menu for ${esc(name)}">${esc(initials(name || email))}</button>
         <div class="c51-menu pmenu__list" id="pmenu" role="menu" hidden>
           <div class="c51-menu__who"><p class="c51-menu__name">${esc(name)}</p><p class="c51-menu__email">${esc(email)}</p></div>
           <a class="c51-menu__item" role="menuitem" href="#/passport">Passport</a>
