@@ -770,3 +770,6 @@ html { scroll-padding-top: 110px; }
 .app__foot .app__strava { display: inline-flex; align-items: center; gap: 5px; }
 .app__foot .app__strava .strava-logo { height: 10px; }
 .home__strava { gap: 6px; }
+/* Results chart fills the card height evenly when the neighbour card is taller */
+@media (min-width: 901px) { .ps-chart--wide { flex: 1; display: flex; align-items: center; } .ps-chart--wide > svg { width: 100%; } }
+.app__foot a.app__strava:hover { color: inherit; text-decoration: none; }
