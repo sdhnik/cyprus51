@@ -24,6 +24,14 @@
 <div id="app">
   <div class="boot" role="status"><span class="wordmark">CYPRUS <span>5+1</span></span><span class="sr">Loading…</span></div>
 </div>
+<script>
+  // Signed-in runners see the passport's shape right away instead of an empty screen.
+  try {
+    if (Object.keys(localStorage).some((k) => /^sb-.*-auth-token$/.test(k)) && !location.search) {
+      document.getElementById('app').innerHTML = '<div class="app boot--app" role="status" aria-busy="true"><header class="app__head"><span class="wordmark">CYPRUS <span>5+1</span></span><span class="avatar"></span></header><main class="app__main"><span class="sr">Loading your passport…</span><div class="sk sk--hero"></div><div class="sk sk--card"></div></main></div>';
+    }
+  } catch (e) {}
+</script>
 <noscript>Cyprus 5+1 needs JavaScript to show your passport.</noscript>
 </body>
 </html>

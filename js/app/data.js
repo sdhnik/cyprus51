@@ -14,7 +14,7 @@ export async function loadRaces() {
 }
 
 export const asset = (path) => new URL(path, BASE).href;
-export const stampImg = (stamp, earned) => asset(`assets/stamps/${stamp}-${earned ? 'verified' : 'locked'}.png`);
+export const stampImg = (stamp, earned) => asset(`assets/stamps/${stamp}-${earned ? 'verified' : 'locked'}.webp`);
 
 // "2027-01-24" → exact day; "2027-11" → month only, date not announced yet.
 export function raceDate(r) {
@@ -115,7 +115,10 @@ export function parseGpx(xml) {
 
 // Elevation profile as an SVG path in a 600×70 box (for cards).
 export function profilePath(c, w = 600, h = 70) {
-  const lo = Math.min(...c.ele), hi = Math.max(...c.ele, lo + 20);
+  // At least 40 m of range, so a flat course does not look like mountains.
+  const mn = Math.min(...c.ele), mx = Math.max(...c.ele);
+  const mid = (mn + mx) / 2, half = Math.max(20, (mx - mn) / 2);
+  const lo = mid - half, hi = mid + half;
   const tot = c.dist[c.dist.length - 1], n = 80;
   let j = 0;
   const line = [];

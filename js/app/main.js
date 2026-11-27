@@ -4,6 +4,7 @@ import * as auth from './views/auth.js';
 import { passport } from './views/passport.js';
 import { account } from './views/account.js';
 import { home } from './views/home.js';
+import { achievement } from './views/achievement.js';
 import { banner, esc } from './ui.js';
 import { state, loadProfile } from './state.js';
 
@@ -18,6 +19,7 @@ route('reset', auth.reset, { user: true });
 route('link-problem', auth.linkProblem, { guest: true });
 route('passport', passport, { user: true });
 route('account', account, { user: true });
+route('achievement', achievement, { user: true });
 
 onRender(async (name, r, args) => {
   state.session = (await sb.auth.getSession()).data.session;   // local read, no network
@@ -31,7 +33,7 @@ onRender(async (name, r, args) => {
     await r.view(root, { args, state, flash });
   } catch (e) {
     console.error(e);
-    root.innerHTML = `<main class="page-error" id="main">${banner('error', 'Something went wrong on our side', 'Nothing is lost. Reload the page, or try again in a minute.')}<p class="muted">Details: ${esc(e?.message || e)}</p><button class="c51-btn c51-btn--secondary" onclick="location.reload()">Reload</button></main>`;
+    root.innerHTML = `<main class="page-error" id="main">${banner('error', 'Something went wrong on our side', 'Nothing is lost. Reload the page, or try again in a minute.')}<details class="err-details"><summary>Technical details</summary><p>${esc(e?.message || e)}</p></details><button class="c51-btn c51-btn--secondary" onclick="location.reload()">Reload</button></main>`;
   }
   const h1 = root.querySelector('h1');
   if (h1) { h1.tabIndex = -1; document.title = `${h1.textContent.trim()} · Cyprus 5+1`; }
@@ -54,7 +56,16 @@ async function start() {
 
   if (fromEmail) {
     history.replaceState(null, '', location.pathname + location.hash);   // drop ?code=… from the address
-    if (!state.session) return go('link-problem');
+    if (!state.session) {
+      const expired = params.has('error') || /expired|invalid/i.test(location.hash);
+      if (params.has('reset')) {
+        return go('forgot', { flash: banner('pending', expired ? 'This reset link has expired' : 'Open the reset link in this browser', expired ? 'Ask for a new one below. It works for 60 minutes.' : 'The link was opened in a different app or browser. Ask for a new link here and open it in this browser.') });
+      }
+      if (params.has('confirmed') && !expired) {
+        return go('login', { flash: banner('success', 'Email confirmed', 'Your passport is ready. Log in to continue.') });
+      }
+      return go('link-problem');
+    }
     if (recovery) return go('reset');
     if (params.has('confirmed')) return go('passport', { flash: banner('success', 'Email confirmed', 'Welcome to Cyprus 5+1. Your passport is ready.') });
   }

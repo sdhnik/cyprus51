@@ -3,6 +3,7 @@ import { sb, APP_URL, authMessage } from '../supa.js';
 import { field, setError, banner, wireReveal, busy, esc, icon } from '../ui.js';
 import { asset } from '../data.js';
 import { go } from '../router.js';
+import '../rules.js';
 
 const LEGAL = (page) => asset(`legal/${page}.html`);
 
@@ -33,8 +34,9 @@ function shell({ eyebrow, title, lead, body, foot = '' }) {
 const emailOk = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(v);
 
 // Shows a general error above the form, or under the field it belongs to.
-function showError(form, err) {
+function showError(form, err, { asBanner = false } = {}) {
   const m = authMessage(err);
+  if (asBanner) m.field = '';
   const box = form.querySelector('.form-msg');
   if (m.field && form.querySelector(`[data-field="${m.field}"]`)) {
     box.innerHTML = '';
@@ -49,7 +51,8 @@ function showError(form, err) {
   }
 }
 
-export function login(root, { notice } = {}) {
+export function login(root, { notice, flash } = {}) {
+  notice = notice || flash || '';
   root.innerHTML = shell({
     eyebrow: 'RUNNER LOGIN',
     title: 'Welcome back.',
@@ -74,7 +77,7 @@ export function login(root, { notice } = {}) {
     const done = busy(form.querySelector('[type=submit]'), 'Logging in…');
     const { error } = await sb.auth.signInWithPassword({ email, password });
     done();
-    if (error) return showError(form, error);
+    if (error) return showError(form, error, { asBanner: true });
     go('passport');
   });
 }
@@ -93,7 +96,7 @@ export function join(root) {
         <label class="c51-check__row">
           <input class="c51-check__input" type="checkbox" name="adult" required>
           <span class="c51-check__box">${icon('check', 16)}</span>
-          <span class="c51-check__label">I'm 18 or older and agree to the <a href="${LEGAL('rules')}" target="_blank">Rules</a>, <a href="${LEGAL('terms')}" target="_blank">Terms</a> and <a href="${LEGAL('privacy')}" target="_blank">Privacy Policy</a>.</span>
+          <span class="c51-check__label">I'm 18 or older and agree to the <a href="${LEGAL('rules')}" data-open-rules>Rules</a>, <a href="${LEGAL('terms')}" target="_blank">Terms</a> and <a href="${LEGAL('privacy')}" target="_blank">Privacy Policy</a>.</span>
         </label>
       </div>
       <button class="c51-btn c51-btn--primary c51-btn--block" type="submit">Create my passport ${icon('arrow')}</button>
@@ -139,13 +142,13 @@ function checkInbox(root, email) {
   root.querySelector('.auth__foot').innerHTML = `Already confirmed? <a href="#/login">Log in</a>`;
 }
 
-export function forgot(root) {
+export function forgot(root, { flash } = {}) {
   root.innerHTML = shell({
     eyebrow: 'ACCOUNT ACCESS',
     title: 'Reset your<br>password.',
     lead: 'Enter the email you joined with. We’ll send you a link to set a new password.',
     body: `<form class="form" novalidate>
-      <div class="form-msg" tabindex="-1"></div>
+      <div class="form-msg" tabindex="-1">${flash || ''}</div>
       ${field({ name: 'email', label: 'Email address', type: 'email', autocomplete: 'email', placeholder: 'you@example.com', inputmode: 'email' })}
       <button class="c51-btn c51-btn--primary c51-btn--block" type="submit">Send reset link ${icon('arrow')}</button>
     </form>`,
@@ -195,7 +198,8 @@ export function reset(root) {
   });
 }
 
-// Shown when a link from an email has expired or was opened in another browser.
+// Shown when a link from an email could not finish the sign-in here: it expired, or it was
+// opened in another browser (for example the Gmail app's own browser).
 export function linkProblem(root) {
   login(root, {
     notice: banner('pending', 'This link did not work here', 'It may have expired, or it was opened in a different browser. Log in below, or ask for a new link.'),

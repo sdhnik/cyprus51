@@ -1,14 +1,11 @@
 // Passport — follows the PassportDesktop / PassportMobile / PassportEmpty designs.
-import { sb } from '../supa.js';
 import { appShell } from '../layout.js';
 import { esc, icon } from '../ui.js';
-import { loadRaces, raceDate, formatRaceDate, daysUntil, checkInOpen, seasonEnd, stampImg, course, profilePath, fmtTime, asset } from '../data.js';
+import { raceDate, formatRaceDate, daysUntil, checkInOpen, seasonEnd, stampImg, course, profilePath, fmtTime, asset } from '../data.js';
+import { loadSeason, HALF_KM, SUB130, badgeImg } from '../model.js';
 
-const HALF_KM = 21.0975;
-const SUB130 = 90 * 60;
 const plural = (n, one, many = one + 's') => `${n.toLocaleString('en-GB')} ${n === 1 ? one : many}`;
 const pace = (sec) => fmtTime(Math.round(sec / HALF_KM));
-const badgeImg = (slug, earned) => asset(`assets/achievements/${slug}-${earned ? 'earned' : 'locked'}.png`);
 
 const ICON = {
   trophy: 'M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4zM17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3',
@@ -34,36 +31,22 @@ const progress = (value, max, caption, label) => `<div class="c51-progress">
 export async function passport(root, { state, flash }) {
   root.innerHTML = appShell(`<div aria-busy="true" role="status"><span class="sr">Loading your passport…</span><div class="sk sk--hero"></div><div class="sk sk--card"></div></div>`);
 
-  const [data, subsRes, commRes] = await Promise.all([
-    loadRaces(),
-    sb.from('submissions').select('race_id, status, watch_time_s, official_time_s, place, place_of'),
-    sb.rpc('community_stats'),
-  ]);
-  if (subsRes.error) throw subsRes.error;
-  const subs = new Map(subsRes.data.map((s) => [s.race_id, s]));
-  const now = new Date();
-  const races = [...data.races, { ...data.abroad, city: 'International', abroad: true }];
-  const cyprus = data.races;
-
-  const isV = (r) => subs.get(r.id)?.status === 'verified';
-  const verified = races.filter(isV).map((r) => ({ r, s: subs.get(r.id) }));
-  const nV = verified.length;
-  const nCyprusV = cyprus.filter(isV).length;
-  const nReview = [...subs.values()].filter((s) => s.status === 'pending').length;
-  const times = verified.map((v) => v.s.official_time_s);
-  const pb = nV ? verified.reduce((a, b) => (b.s.official_time_s < a.s.official_time_s ? b : a)) : null;
-  const avg = nV ? Math.round(times.reduce((a, b) => a + b, 0) / nV) : null;
-  const next = cyprus.find((r) => raceDate(r).end >= now && !subs.has(r.id));
-  const nextDays = next && !raceDate(next).tbc ? daysUntil(raceDate(next).start, now) : null;
+  const m = await loadSeason();
+  const { data, subs, races, cyprus, isV, verified, nV, nCyprusV, nReview, times, pb, avg, next, nextDays, seasonStart, abroadDone } = m;
+  const now = m.now;
   const daysLeft = Math.max(0, daysUntil(seasonEnd(data), now));
   const raceDay = cyprus.find((r) => checkInOpen(r, now) && !subs.has(r.id));
   const name = state.profile?.display_name || 'Runner';
 
   // ── Hero ───────────────────────────────────────────
   const chips = [`${nV} of 6 stamps`];
+  const toStart = seasonStart ? daysUntil(seasonStart, now) : 0;
   if (nReview) chips.push(`${nReview} under review`);
-  else if (nV === 0 && nextDays != null) chips.push(nextDays === 0 ? 'First race today' : `First race in ${plural(nextDays, 'day')}`);
-  chips.push(`${plural(daysLeft, 'day')} left in season`);
+  if (toStart > 0) chips.push(`Season starts in ${plural(toStart, 'day')}`);
+  else {
+    if (!nReview && nV === 0 && nextDays != null) chips.push(nextDays === 0 ? 'Race day today' : `Next race in ${plural(nextDays, 'day')}`);
+    chips.push(`${plural(daysLeft, 'day')} left in season`);
+  }
   const stats = [
     { label: 'Best time', value: pb ? fmtTime(pb.s.official_time_s) : '—', note: pb ? pb.r.city : 'not set yet' },
     { label: 'Avg pace', value: avg ? pace(avg) : '—', note: 'min per km' },
@@ -117,7 +100,6 @@ export async function passport(root, { state, flash }) {
   // ── Challenges ─────────────────────────────────────
   const CH = [];
   const nextName = next ? next.city : '';
-  const abroadDone = isV(races[races.length - 1]);
   if (nV === 0) {
     if (next) {
       CH.push({ kind: 'Next race', icon: ICON.trophy, title: 'Earn your first stamp', text: `Finish ${nextName} ${raceDate(next).tbc ? 'this season' : 'on ' + formatRaceDate(next).replace(/^\w+ /, '')} and submit your result.`, tlabel: 'Race day', target: formatRaceDate(next).toUpperCase(), cta: `#/race/${next.id}`, unlock: 'Personal Best', unlockImg: badgeImg('personal-best', true) });
@@ -181,8 +163,14 @@ export async function passport(root, { state, flash }) {
   </section>`;
 
   // ── Community ──────────────────────────────────────
-  const c = commRes.error ? null : commRes.data;
-  let community = '';
+  const c = m.community;
+  let community = `<section class="card ps-com" aria-labelledby="community-title">
+      <h2 id="community-title" class="h2">The challenge</h2>
+      <p class="ps-com__lead">${c === null ? 'Runner numbers are not available right now. Try again a bit later.' : 'Runner numbers appear here once people start collecting stamps.'}</p>
+      <div class="ps-com__empty" aria-hidden="true">${[0, 1, 2, 3, 4, 5, 6].map((k) => `<div><div></div><span>${k}</span></div>`).join('')}</div>
+      <p class="ps-com__note">Runners by number of stamps, 0–6 · anonymous</p>
+      <button type="button" class="c51-btn c51-btn--secondary c51-btn--block" data-invite>Invite a friend</button>
+    </section>`;
   if (c && c.runners) {
     const mine = Math.min(c.my_stamps ?? nV, 6);
     const maxN = Math.max(...c.dist, 1);
@@ -202,24 +190,17 @@ export async function passport(root, { state, flash }) {
   }
 
   // ── Achievements ───────────────────────────────────
-  const anyAbroad = abroadDone;
-  const badges = [
-    { name: 'Personal Best', slug: 'personal-best', v: nV ? 1 : 0, max: 1, cap: pb ? `${fmtTime(pb.s.official_time_s)} · ${pb.r.city}` : 'First verified race' },
-    { name: '5 Cities Finisher', slug: '5-cities-finisher', v: nCyprusV, max: 5, cap: `${nCyprusV} of 5` },
-    { name: 'International Finisher', slug: 'international-finisher', v: anyAbroad ? 1 : 0, max: 1, cap: anyAbroad ? 'Earned' : 'Race abroad' },
-    { name: '5+1 Finisher', slug: '5plus1-finisher', v: nV, max: 6, cap: `${nV} of 6` },
-    { name: 'Sub 1:30 Elite', slug: 'sub-1-30-elite', v: pb && pb.s.official_time_s < SUB130 ? 1 : 0, max: 1, cap: pb ? (pb.s.official_time_s < SUB130 ? fmtTime(pb.s.official_time_s) : `${fmtTime(pb.s.official_time_s - SUB130 + 1)} to find`) : 'Under 1:30' },
-  ];
-  const earned = badges.filter((b) => b.v >= b.max).length;
+  const badges = m.badges;
+  const earned = badges.filter((b) => b.earned).length;
   const awards = `<section class="card ps-awards" aria-labelledby="awards-title">
     <div class="ps-head"><h2 id="awards-title" class="h2">Achievements</h2><p class="ps-head__note">${earned} of 5 earned</p></div>
-    <ul class="ps-awards__list">${badges.map((b) => `<li class="ps-badge"><img src="${badgeImg(b.slug, b.v >= b.max)}" alt=""><div class="ps-badge__text"><span class="num ps-badge__name">${b.name}</span>${progress(b.v, b.max, b.cap, b.name)}</div></li>`).join('')}</ul>
+    <ul class="ps-awards__list">${badges.map((b) => `<li><a class="ps-badge" href="#/achievement/${b.slug}"><img src="${b.img}" alt=""><div class="ps-badge__text"><span class="num ps-badge__name">${b.name}</span>${progress(b.v, b.max, b.cap, b.name)}</div></a></li>`).join('')}</ul>
   </section>`;
 
   root.innerHTML = appShell(`${flash || ''}${hero}${raceDayCard}
     <div class="ps-row">${nextCard}${challengeCard}</div>
     ${season}
-    <div class="ps-row">${results}${community || ''}</div>
+    <div class="ps-row">${results}${community}</div>
     ${awards}`);
 
   // Challenge carousel: every slide sits in the same grid cell, so the card keeps

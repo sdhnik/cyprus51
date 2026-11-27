@@ -21,9 +21,10 @@
 <link rel="stylesheet" href="css/tokens.css">
 <style>
   * { box-sizing: border-box; }
+  html, body { height: 100%; }
   body { margin: 0; background: var(--ivory); color: var(--ink); font: 16px/1.5 var(--font-sans); }
   a { color: inherit; }
-  .page { height: 100vh; height: 100dvh; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); border-top: 6px solid var(--orange-500); }
+  .page { height: 100%; overflow: hidden; display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, .9fr); border-top: 6px solid var(--orange-500); }
   .main { display: flex; flex-direction: column; min-height: 0; padding: 0 clamp(20px, 5vw, 80px); }
   header { display: flex; align-items: center; height: 80px; }
   .wordmark { font: 800 32px/1 var(--font-display); text-decoration: none; }
@@ -68,7 +69,7 @@
     .actions { gap: 10px; }
     .actions .btn { flex: 1 1 100%; min-height: 48px; }
   }
-  @media (max-height: 679px) { .page { height: auto; min-height: 100vh; overflow: visible; } }
+  @media (max-height: 679px) { .page { height: auto; min-height: 100%; overflow: visible; } }
 </style>
 </head>
 <body>
@@ -80,12 +81,12 @@
       <h1>Six finish lines.<br><span class="accent">One passport.</span></h1>
       <p class="lead">Run the five Cyprus half marathons and one abroad. Every verified finish earns a stamp. Every pace is welcome.</p>
       <div class="stamps" aria-label="The six stamps: Nicosia, Paphos, Limassol, Larnaka, Ayia Napa, International">
-        <img src="assets/stamps/nicosia-verified.png" alt="">
-        <img src="assets/stamps/paphos-verified.png" alt="">
-        <img src="assets/stamps/limassol-verified.png" alt="">
-        <img src="assets/stamps/larnaka-verified.png" alt="">
-        <img src="assets/stamps/ayia-napa-verified.png" alt="">
-        <img src="assets/stamps/international-verified.png" alt="">
+        <img src="assets/stamps/nicosia-verified.webp" alt="">
+        <img src="assets/stamps/paphos-verified.webp" alt="">
+        <img src="assets/stamps/limassol-verified.webp" alt="">
+        <img src="assets/stamps/larnaka-verified.webp" alt="">
+        <img src="assets/stamps/ayia-napa-verified.webp" alt="">
+        <img src="assets/stamps/international-verified.webp" alt="">
       </div>
       <div class="card">
         <div class="date" aria-hidden="true"><span>JAN<b>24</b></span></div>
