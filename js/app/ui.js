@@ -78,3 +78,13 @@ export function busy(btn, label = 'Please wait…') {
 }
 
 export const initials = (name) => (name || '?').trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+
+// Time fields: type digits, the colons appear by themselves (14410 → 1:44:10).
+export function wireTime(input) {
+  input.addEventListener('input', () => {
+    const d = input.value.replace(/\D/g, '').slice(0, 6);
+    if (d.length <= 2) { input.value = d; return; }
+    const s = d.slice(-2), rest = d.slice(0, -2);
+    input.value = rest.length <= 2 ? `${rest}:${s}` : `${rest.slice(0, -2)}:${rest.slice(-2)}:${s}`;
+  });
+}

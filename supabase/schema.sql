@@ -123,7 +123,11 @@ begin
 
   -- runner (also an admin editing their own result)
   if tg_op = 'UPDATE' and old.status = 'verified' then
-    raise exception 'A verified result can no longer be changed';
+    -- the finish photo is the runner's own, everything else is locked
+    if (to_jsonb(new) - 'photo_path' - 'updated_at') is distinct from (to_jsonb(old) - 'photo_path' - 'updated_at') then
+      raise exception 'A verified result can no longer be changed';
+    end if;
+    return new;
   end if;
   if new.status not in ('checked_in', 'pending') then
     raise exception 'Only an admin can verify or reject a result';

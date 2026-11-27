@@ -51,7 +51,10 @@ export async function passport(root, { state, flash }) {
   const { data, plan, subs, races, cyprus, isV, verified, nV, nCyprusV, nReview, times, pb, avg, next, nextDays, seasonStart, abroadDone } = m;
   const now = m.now;
   const daysLeft = Math.max(0, daysUntil(seasonEnd(data), now));
-  const raceDay = cyprus.find((r) => checkInOpen(r, now) && !subs.has(r.id));
+  const abroadR = races.find((r) => r.abroad);
+  const planD = plan ? daysUntil(new Date(plan.race_date + 'T00:00:00'), now) : null;
+  const raceDay = cyprus.find((r) => checkInOpen(r, now) && !subs.has(r.id))
+    || (plan && planD <= 0 && planD >= -3 && !subs.has(abroadR.id) ? { id: 'abroad', city: plan.race_name } : null);
   const name = state.profile?.display_name || 'Runner';
 
   // ── Hero ───────────────────────────────────────────
@@ -154,8 +157,11 @@ export async function passport(root, { state, flash }) {
     if (nV >= 2 && next) CH.push({ kind: 'Consistency', icon: ICON.target, title: 'Consistent finish', text: `Finish ${nextName} within 3 minutes of your average, ${fmtTime(avg)}.`, tlabel: 'Finish window', target: `${fmtTime(avg - 180)} – ${fmtTime(avg + 180)}`, small: true, cta: `#/race/${next.id}` });
   }
   if (!abroadDone) {
-    const planDays = plan ? daysUntil(new Date(plan.race_date + 'T00:00:00'), now) : null;
-    CH.push(plan
+    const planDays = planD;
+    const abroadSub = subs.get(abroadR.id);
+    CH.push(plan && planDays < 0 && !abroadSub
+      ? { kind: 'Race abroad', icon: ICON.globe, title: 'Add your result abroad', text: `Ran ${plan.race_name}? Add the official result for your sixth stamp.`, tlabel: 'Race day', target: dayShort(plan.race_date).toUpperCase(), cta: '#/race/abroad/submit', ctaLabel: 'Submit your result abroad', unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) }
+      : plan
       ? { kind: 'Race abroad', icon: ICON.globe, title: plan.race_name.length > 22 ? plan.race_name : `Run ${plan.race_name}`, text: `${plan.country} · ${dayShort(plan.race_date)}. Your sixth stamp.`, tlabel: planDays > 0 ? 'Days to race' : 'Race day', target: planDays > 0 ? String(planDays) : dayShort(plan.race_date).toUpperCase(), edit: true, unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) }
       : { kind: 'Race abroad', icon: ICON.globe, title: 'Add your race abroad', text: `Entered a half abroad? Add it to your ${data.season} calendar.`, tlabel: 'Stamp 6', target: 'Not added yet', muted: true, add: true, unlock: 'International Finisher', unlockImg: badgeImg('international-finisher', true) });
   }
@@ -178,7 +184,7 @@ export async function passport(root, { state, flash }) {
     const s = subs.get(r.id);
     const st = s ? s.status : 'none';
     const isNext = planNext ? !!r.abroad : next && r.id === next.id;
-    const detail = st === 'verified' ? fmtTime(s.official_time_s) : st === 'pending' ? fmtTime(s.official_time_s || s.watch_time_s) : st === 'checked_in' ? fmtTime(s.watch_time_s) : st === 'rejected' ? 'Fix result' : isNext ? 'Next up' : r.abroad && plan ? 'Planned' : '';
+    const detail = st === 'verified' ? fmtTime(s.official_time_s) : st === 'pending' ? fmtTime(s.official_time_s || s.watch_time_s) : st === 'checked_in' ? fmtTime(s.watch_time_s) : st === 'rejected' ? 'Fix result' : isNext ? 'Next up' : r.abroad && plan ? (planD < 0 ? 'Add result' : 'Planned') : '';
     const img = stampImg(r.stamp, st === 'verified' || st === 'pending');
     const op = st === 'pending' ? .45 : 1;
     return { r, st, detail, img, op, date: r.abroad ? (plan ? `${dayShort(plan.race_date)} · ${plan.country}` : 'Any race abroad') : formatRaceDate(r), href: r.abroad ? '#/race/abroad' : `#/race/${r.id}` };
@@ -271,7 +277,7 @@ export async function passport(root, { state, flash }) {
         <div class="ps-ch__top"><div class="ps-ch__title"><span class="ps-ch__icon">${svgIcon(ch.icon, 28)}</span><h2 class="h2"${n === 0 ? ' id="goal-title"' : ''} title="${esc(ch.title)}">${esc(ch.title)}</h2></div><p class="ps-ch__text">${esc(ch.text)}</p></div>
         <div class="ps-ch__result">
           ${ch.progress ? progress(ch.progress[0], ch.progress[1], ch.progress[2], ch.title) : ''}
-          ${ch.target ? `<div class="ps-ch__target"><div><p class="ps-ch__tlabel">${esc(ch.tlabel)}</p><p class="num ps-ch__tvalue${ch.small ? ' is-small' : ''}${ch.muted ? ' is-muted' : ''}">${esc(ch.target)}</p></div>${ch.cta ? `<a href="${ch.cta}" class="ps-ch__cta" aria-label="Plan ${esc(nextName)} with this target" title="Plan this race">${svgIcon(ICON.arrow, 20)}</a>` : ''}${ch.edit ? `<button type="button" class="ps-ch__cta" data-abroad aria-label="Edit your race abroad" title="Edit race">${svgIcon(ICON.edit, 18)}</button>` : ''}${ch.add ? `<button type="button" class="ps-ch__add" data-abroad>${svgIcon(ICON.plus, 18)}Add race</button>` : ''}</div>` : ''}
+          ${ch.target ? `<div class="ps-ch__target"><div><p class="ps-ch__tlabel">${esc(ch.tlabel)}</p><p class="num ps-ch__tvalue${ch.small ? ' is-small' : ''}${ch.muted ? ' is-muted' : ''}">${esc(ch.target)}</p></div>${ch.cta ? `<a href="${ch.cta}" class="ps-ch__cta" aria-label="${esc(ch.ctaLabel || `Plan ${nextName} with this target`)}" title="${esc(ch.ctaLabel ? 'Open' : 'Plan this race')}">${svgIcon(ICON.arrow, 20)}</a>` : ''}${ch.edit ? `<button type="button" class="ps-ch__cta" data-abroad aria-label="Edit your race abroad" title="Edit race">${svgIcon(ICON.edit, 18)}</button>` : ''}${ch.add ? `<button type="button" class="ps-ch__add" data-abroad>${svgIcon(ICON.plus, 18)}Add race</button>` : ''}</div>` : ''}
           ${ch.unlock ? `<div class="ps-ch__unlock"><img src="${ch.unlockImg}" alt=""><p><span>Unlocks</span> <strong>${esc(ch.unlock)}</strong></p></div>` : ''}
         </div></div>`).join('');
     const show = () => {

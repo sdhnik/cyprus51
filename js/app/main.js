@@ -6,6 +6,7 @@ import { account } from './views/account.js';
 import { home } from './views/home.js';
 import { achievement } from './views/achievement.js';
 import { admin } from './views/admin.js';
+import { race } from './views/race.js';
 import { esc, icon } from './ui.js';
 import { appShell } from './layout.js';
 import { state, loadProfile } from './state.js';
@@ -14,6 +15,11 @@ const root = document.getElementById('app');
 
 // Browser tab titles: page first, site name last.
 const BADGES = { 'personal-best': 'Personal Best', '5-cities-finisher': '5 Cities Finisher', 'international-finisher': 'International Finisher', '5plus1-finisher': '5+1 Finisher', 'sub-1-30-elite': 'Sub 1:30 Elite' };
+const CITY = { 'nicosia-2027': 'Nicosia', 'paphos-2027': 'Paphos', 'limassol-2027': 'Limassol', 'larnaka-2027': 'Larnaka', 'ayia-napa-2027': 'Ayia Napa' };
+function raceTitle([id, sub] = []) {
+  const name = id === 'abroad' ? 'Race abroad' : CITY[id] ? `${CITY[id]} Half Marathon` : 'Race';
+  return sub === 'submit' ? `Submit result · ${name}` : sub === 'checkin' ? `Check in · ${name}` : name;
+}
 function pageTitle(name, args = []) {
   const t = {
     '': 'Cyprus 5+1 · Running passport for Cyprus half marathons',
@@ -27,8 +33,9 @@ function pageTitle(name, args = []) {
     account: 'Account · Cyprus 5+1',
     achievement: `${BADGES[args[0]] || 'Achievement'} · Achievements · Cyprus 5+1`,
     admin: 'Review queue · Cyprus 5+1',
+    race: `${raceTitle(args)} · Cyprus 5+1`,
   }[name];
-  return document.querySelector('.page-error') ? 'Something went wrong · Cyprus 5+1' : (t || 'Cyprus 5+1');
+  return document.querySelector('.is-404') ? 'Page not found · Cyprus 5+1' : document.querySelector('.page-error') ? 'Something went wrong · Cyprus 5+1' : (t || 'Cyprus 5+1');
 }
 
 route('', home, { guest: true });
@@ -42,6 +49,7 @@ route('passport', passport, { user: true });
 route('account', account, { user: true });
 route('achievement', achievement, { user: true });
 route('admin', admin, { user: true });
+route('race', race, { user: true });
 
 onRender(async (name, r, args) => {
   state.session = (await sb.auth.getSession()).data.session;   // local read, no network
