@@ -40,6 +40,19 @@ Distance, elevation, the map and the profile are calculated from the GPX.
 - **Keep Supabase awake** (`.github/workflows/keepalive.yml`): one tiny request a day. It also re-enables itself and the backup every day, so GitHub's "60 days without activity" rule does not switch them off.
 - **Back up database** (`.github/workflows/backup.yml`): every Monday, an encrypted backup of the database (and the photo and GPX files, if the key is set). It needs repository secrets; see the top of the file.
 
+## Emails
+
+Sign-up, password and email-change emails are Supabase Auth templates (`supabase/emails/`).
+Result emails come from the Edge Function `supabase/functions/notify/index.ts`, sent through the project Gmail:
+
+- **Result verified** and **Result rejected**: the moment an admin reviews a result (database trigger).
+- **Add your official result**: once, about a day after check-in, if the result is still missing (daily job at 09:07 UTC).
+
+`email_log` records every email sent, so nobody gets the same email twice.
+Secrets (Edge Functions → Secrets): `GMAIL_USER`, `GMAIL_APP_PASSWORD`, `NOTIFY_SECRET`.
+The same `NOTIFY_SECRET` is stored in Vault as `notify_secret`, so the database can call the function.
+To see the three emails with sample data, send `{"kind":"test"}` to the function with the header `x-notify-secret`.
+
 ## Backups
 
 Each run of **Back up database** keeps one file for 90 days: Actions → Back up database → the run → Artifacts.
