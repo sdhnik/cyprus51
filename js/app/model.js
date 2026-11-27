@@ -2,6 +2,7 @@
 import { today, state } from './state.js';
 import { sb } from './supa.js';
 import { isOffline } from './outbox.js';
+import { banner } from './ui.js';
 import { loadRaces, raceDate, daysUntil, fmtTime, asset } from './data.js';
 
 export const HALF_KM = 21.0975;
@@ -40,7 +41,7 @@ function readSaved(key) {
 
 // Banner for screens built from the saved season.
 export const offlineNote = (m) => (m.offline
-  ? `<div class="c51-banner c51-banner--pending" role="status"><div class="c51-banner__text"><p class="c51-banner__title">You’re offline</p><p>Showing your passport as it was ${new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(m.savedAt)).replace(',', '')}. Check-ins are saved on this phone and sent when you’re back online.</p></div></div>`
+  ? banner('pending', 'You’re offline', `Your passport as of ${new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(m.savedAt)).replace(',', '')}. Check-ins wait on this phone until you’re online.`)
   : '');
 
 export function model(data, rows, community, plan = null, now = new Date()) {

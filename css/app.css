@@ -791,3 +791,4 @@ html { scroll-padding-top: 110px; }
 .inst--plain .inst__os { display: none; }
 .inst--plain .inst__t { display: none; }
 .inst__steps p { margin: 0; }
+[data-inst-slot]:empty { display: none; }

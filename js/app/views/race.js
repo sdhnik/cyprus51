@@ -153,7 +153,7 @@ export async function race(root, { state, args, flash }) {
     body = `<div class="rc-grid"><div class="rc-col">${courseCard}${resultCard}</div><div class="rc-col">${targetCard(m)}</div></div>`;
   }
   const back = `<a class="back" href="#/passport">${icon('back')}Passport</a>`;
-  root.innerHTML = appShell(`${flash || ''}${offlineNote(m)}${back}${hero}${showCheckIn ? checkInCard(x) : ''}${body}`);
+  root.innerHTML = appShell(`${flash || ''}${back}${offlineNote(m)}${hero}${showCheckIn ? checkInCard(x) : ''}${body}`);
 
   root.querySelector('[data-abroad]')?.addEventListener('click', () => openAbroad(x.plan, () => render()));
   root.querySelector('[data-retry]')?.addEventListener('click', async (e) => {
