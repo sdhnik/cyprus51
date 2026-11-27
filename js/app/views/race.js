@@ -9,6 +9,7 @@ import { planCourse, openAbroad } from '../abroad.js';
 import { combobox, countryNames } from '../combobox.js';
 import { routeSvg, elevationSvg } from '../course.js';
 import { routeMap } from '../map.js';
+import { drawCard, toBlob } from '../sharecard.js';
 import { compressPhoto, photoError, uploadPhoto, photoUrl, removePhoto, toDataUrl } from '../photo.js';
 import { enqueue, queued, isOffline, flush } from '../outbox.js';
 import { go, render } from '../router.js';
@@ -29,6 +30,8 @@ function fromEu(text) {
   if (dt.getUTCMonth() !== +m[2] - 1 || dt.getUTCDate() !== +m[1]) return null;
   return `${m[3]}-${m[2].padStart(2, '0')}-${m[1].padStart(2, '0')}`;
 }
+const SHARE_IC = 'M12 3v12M8 7l4-4 4 4M5 12v8h14v-8';
+const DOWNLOAD_IC = 'M12 4v11M7 10l5 5 5-5M5 20h14';
 const CAMERA = 'M3 8h4l2-3h6l2 3h4v12H3zM12 17a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z';
 const LOCK = 'M6 11h12v10H6zM8 11V7a4 4 0 0 1 8 0v4';
 const ROUTE = 'M6 19a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM18 9a2 2 0 1 0 0-4 2 2 0 0 0 0 4zM6 15V9a4 4 0 0 1 4-4h6M18 9v6a4 4 0 0 1-4 4H8';
@@ -266,8 +269,8 @@ function doneCard(x) {
     </div>
     <div class="rc-sec" data-stats hidden></div>
     <div class="rc-sec rc-share">
-      <div><p class="lbl">Share on Strava</p><p class="rc-note" data-share-note>Copy a line for your Strava activity description.</p></div>
-      <div class="rc-share__btns"><button type="button" class="c51-btn c51-btn--secondary" data-copy-strava>Copy for Strava</button>${stravaLink(STRAVA_CLUB_URL, 'club', 'c51-btn c51-btn--secondary')}</div>
+      <div><p class="lbl">Share your stamp</p><p class="rc-note">An image for Instagram or Strava, and a line for your activity.</p></div>
+      <div class="rc-share__btns"><button type="button" class="c51-btn c51-btn--dark" data-share>${svg(SHARE_IC, 18)}Share</button>${stravaLink(STRAVA_CLUB_URL, 'club', 'c51-btn c51-btn--secondary')}</div>
     </div>
     <p class="rc-meta">${sub.submitted_at ? `<span>Submitted ${day(sub.submitted_at)}</span>` : ''}${sub.reviewed_at ? `<span>Verified ${day(sub.reviewed_at)}</span>` : ''}${sub.result_url ? `<a href="${esc(sub.result_url)}" target="_blank" rel="noopener">Official results ${icon('ext', 14)}</a>` : ''}</p>
   </section>`;
@@ -587,20 +590,83 @@ function thanks(root, x, row, editing) {
   window.scrollTo(0, 0);
 }
 
-// "Copy for Strava": one line for the activity description (ShareStamp design).
+// "Share your stamp" (ShareStamp design): square or story image drawn on a canvas,
+// shared through the phone's menu or downloaded, plus a line for the Strava activity.
 function wireShare(root, x) {
-  const btn = root.querySelector('[data-copy-strava]');
-  if (!btn) return;
+  const open = root.querySelector('[data-share]');
+  if (!open) return;
   const { m, sub, r } = x;
   const isPb = m.pb && m.pb.r.id === r.id;
-  const place = x.abroad ? 'International' : r.city;
-  const text = `🟠 Cyprus 5+1 · ${place} stamp collected · ${m.nV} of 6 · ${isPb ? 'PB ' : ''}${fmtTime(sub.official_time_s)}\nSix finish lines, one passport → ${STRAVA_CLUB_URL.replace(/^https:\/\/(www\.)?/, '')}`;
-  // No clipboard in this browser: the club link alone is enough.
-  if (!navigator.clipboard?.writeText || !isSecureContext) { btn.remove(); root.querySelector('[data-share-note]').textContent = 'Share your run with the Cyprus 5+1 club.'; return; }
-  btn.addEventListener('click', async () => {
-    try { await navigator.clipboard.writeText(text); } catch { window.open(STRAVA_CLUB_URL, '_blank', 'noopener'); return; }
-    btn.innerHTML = `${icon('check', 16)}Copied`;
-    root.querySelector('[data-share-note]').textContent = 'Copied. Paste it into your Strava activity.';
-    setTimeout(() => { btn.textContent = 'Copy for Strava'; }, 2400);
+  const title = x.abroad ? 'International' : r.city;
+  const when = x.date ? new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }).format(x.date.start) : '';
+  const card = {
+    stamp: r.stamp, title,
+    subtitle: [x.abroad ? sub.abroad_name || 'Half marathon abroad' : 'Half marathon', when].filter(Boolean).join(' · '),
+    time: fmtTime(sub.official_time_s), pb: isPb, pace: `${paceOf(sub.official_time_s)} /km`,
+    stamps: m.races.map((q) => ({ stamp: q.stamp, earned: m.isV(q) })), count: m.nV,
+  };
+  const text = `🟠 Cyprus 5+1 · ${title} stamp collected · ${m.nV} of 6 · ${isPb ? 'PB ' : ''}${fmtTime(sub.official_time_s)}\nSix finish lines, one passport → ${STRAVA_CLUB_URL.replace(/^https:\/\/(www\.)?/, '')}`;
+  const canCopy = !!navigator.clipboard?.writeText && isSecureContext;
+  const file = (blob, format) => new File([blob], `cyprus51-${r.stamp}-${format}.png`, { type: 'image/png' });
+  const canShareFiles = () => { try { return !!navigator.canShare?.({ files: [file(new Blob(['x'], { type: 'image/png' }), 'test')] }); } catch { return false; } };
+
+  open.addEventListener('click', () => {
+    const dlg = document.createElement('dialog');
+    dlg.className = 'sheet share';
+    dlg.setAttribute('aria-labelledby', 'share-title');
+    const phoneShare = canShareFiles();
+    dlg.innerHTML = `<div class="c51-dialog sheet__box share__box">
+      <div class="c51-dialog__head"><h2 id="share-title" class="c51-dialog__title share__title">Share your stamp</h2><button type="button" class="c51-dialog__close" data-close>Close</button></div>
+      <div class="seg share__seg" role="group" aria-label="Image format"><button type="button" data-fmt="square" aria-pressed="true">Square · post</button><button type="button" data-fmt="story" aria-pressed="false">Story</button></div>
+      <div class="share__preview" data-preview aria-live="polite"><div class="sk share__sk"></div></div>
+      <button type="button" class="c51-btn c51-btn--primary c51-btn--block" data-go disabled>${svg(phoneShare ? SHARE_IC : DOWNLOAD_IC, 18)}${phoneShare ? 'Share image' : 'Download image'}</button>
+      ${canCopy ? '<button type="button" class="c51-btn c51-btn--secondary c51-btn--block" data-copy>Copy for Strava</button>' : ''}
+      ${phoneShare ? '<p class="share__note">Share opens your phone’s menu: Instagram, WhatsApp, Save image. Add the image to your activity in the Strava app.</p>'
+        : `<p class="share__note">Download the image for a post or a story.${canCopy ? ' Copy the line for your Strava activity description:' : ''}</p>${canCopy ? `<pre class="share__text">${esc(text)}</pre>` : ''}`}
+    </div>`;
+    document.body.appendChild(dlg);
+    const close = () => { dlg.close(); dlg.remove(); };
+    dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); });
+    dlg.addEventListener('close', () => { dlg.remove(); open.focus(); });
+    dlg.querySelector('[data-close]').addEventListener('click', close);
+
+    let format = 'square', blob = null, url = null;
+    const go = dlg.querySelector('[data-go]'), preview = dlg.querySelector('[data-preview]');
+    const draw = async () => {
+      go.disabled = true;
+      preview.className = `share__preview is-${format}`;
+      preview.innerHTML = '<div class="sk share__sk"></div>';
+      try {
+        blob = await toBlob(await drawCard(format, card));
+        if (url) URL.revokeObjectURL(url);
+        url = URL.createObjectURL(blob);
+        preview.innerHTML = `<img src="${url}" alt="${esc(`Share image: ${title} stamp collected, ${card.time}${isPb ? ', personal best' : ''}, ${card.count} of 6 stamps`)}">`;
+        go.disabled = false;
+      } catch { preview.innerHTML = '<p class="rc-note">The image could not be made in this browser.</p>'; }
+    };
+    dlg.querySelectorAll('[data-fmt]').forEach((b) => b.addEventListener('click', () => {
+      format = b.dataset.fmt;
+      dlg.querySelectorAll('[data-fmt]').forEach((o) => o.setAttribute('aria-pressed', String(o === b)));
+      draw();
+    }));
+    go.addEventListener('click', async () => {
+      if (!blob) return;
+      if (phoneShare) {
+        try { await navigator.share({ files: [file(blob, format)], text }); } catch { /* closed the menu */ }
+      } else {
+        const a = document.createElement('a');
+        a.href = url; a.download = `cyprus51-${r.stamp}-${format}.png`;
+        document.body.appendChild(a); a.click(); a.remove();
+      }
+    });
+    dlg.querySelector('[data-copy]')?.addEventListener('click', async (e) => {
+      const b = e.currentTarget;
+      try { await navigator.clipboard.writeText(text); } catch { window.open(STRAVA_CLUB_URL, '_blank', 'noopener'); return; }
+      b.classList.add('is-done');
+      b.innerHTML = `${icon('check', 16)}Copied. Paste it into your Strava activity`;
+      setTimeout(() => { b.classList.remove('is-done'); b.textContent = 'Copy for Strava'; }, 2400);
+    });
+    dlg.showModal();
+    draw();
   });
 }

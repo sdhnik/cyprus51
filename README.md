@@ -38,6 +38,24 @@ Distance, elevation, the map and the profile are calculated from the GPX.
 
 - **Publish site** (`.github/workflows/pages.yml`): on every push to `main`, checks `races.json` and publishes.
 - **Keep Supabase awake** (`.github/workflows/keepalive.yml`): one tiny request a day. GitHub turns scheduled jobs off after 60 days without commits; re-enable it in the Actions tab if that happens.
+- **Back up database** (`.github/workflows/backup.yml`): every Monday, an encrypted backup of the database (and the photo and GPX files, if the key is set). It needs repository secrets; see the top of the file. Same 60-day rule as above.
+
+## Backups
+
+Each run of **Back up database** keeps one file for 90 days: Actions → Back up database → the run → Artifacts.
+The file is encrypted with `BACKUP_PASSPHRASE`, so it can sit in this public repository safely.
+
+Open it:
+
+```sh
+unzip cyprus51-backup-2027-01-25.zip        # GitHub wraps the artifact in a zip
+gpg --decrypt cyprus51-backup-2027-01-25.tar.gz.gpg > backup.tar.gz   # asks for the passphrase
+tar -xzf backup.tar.gz                       # backup/public.sql, backup/auth-and-files.sql, backup/storage/…
+```
+
+Restore into a new, empty Supabase project: run `backup/auth-and-files.sql` first (accounts and file
+records), then `backup/public.sql`, with `psql` or the SQL editor; then upload `backup/storage/photos` and `backup/storage/gpx` to the
+buckets of the same names. A full restore is rarely needed: to look up one result, open `public.sql` in a text editor.
 
 ## Keys
 

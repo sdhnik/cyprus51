@@ -1,0 +1,69 @@
+# Weekly backup of the Supabase database (and, if the key is set, the private files).
+# The backup is encrypted with BACKUP_PASSPHRASE before it is stored, because this
+# repository is public. It is kept as a workflow artifact for 90 days.
+#
+# Repository secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_DB_URL       Supabase → Connect → Session pooler connection string, with the database password
+#   BACKUP_PASSPHRASE     a long passphrase; keep a copy somewhere safe, without it the backup can't be opened
+#   SUPABASE_SERVICE_KEY  optional: Supabase → Project Settings → API keys → secret (service_role) key,
+#                         to include finish photos and GPX files
+#
+# Restore and decrypt: see "Backups" in README.md.
+name: Back up database
+
+on:
+  schedule:
+    - cron: '43 2 * * 1'   # Mondays, 02:43 UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the secrets
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          test -n "$DB"   || { echo "::error::Add the SUPABASE_DB_URL secret"; exit 1; }
+          test -n "$PASS" || { echo "::error::Add the BACKUP_PASSPHRASE secret"; exit 1; }
+      - name: Dump the database
+        env:
+          DB: ${{ secrets.SUPABASE_DB_URL }}
+        run: |
+          mkdir -p backup
+          # The app's tables (structure and data), then the accounts and file records
+          docker run --rm -e DB postgres:17 sh -c 'pg_dump "$DB" --schema=public --no-owner --no-privileges' > backup/public.sql
+          docker run --rm -e DB postgres:17 sh -c 'pg_dump "$DB" --data-only --no-owner --no-privileges --table=auth.users --table=auth.identities --table=storage.buckets --table=storage.objects' > backup/auth-and-files.sql
+          ls -la backup
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Download photos and GPX files
+        env:
+          SUPABASE_URL: https://gsfsyfeytrlmgbhdrunx.supabase.co
+          SUPABASE_SERVICE_KEY: ${{ secrets.SUPABASE_SERVICE_KEY }}
+        run: |
+          if [ -z "$SUPABASE_SERVICE_KEY" ]; then echo "No SUPABASE_SERVICE_KEY secret: files are skipped"; exit 0; fi
+          node scripts/backup-storage.mjs
+      - name: Pack and encrypt
+        env:
+          PASS: ${{ secrets.BACKUP_PASSPHRASE }}
+        run: |
+          name="cyprus51-backup-$(date -u +%Y-%m-%d)"
+          tar -czf "$name.tar.gz" backup
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$PASS" --symmetric --cipher-algo AES256 -o "$name.tar.gz.gpg" "$name.tar.gz"
+          rm -rf backup "$name.tar.gz"
+          echo "NAME=$name" >> "$GITHUB_ENV"
+          ls -la "$name.tar.gz.gpg"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ env.NAME }}
+          path: ${{ env.NAME }}.tar.gz.gpg
+          retention-days: 90
+          if-no-files-found: error

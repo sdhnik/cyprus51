@@ -802,3 +802,22 @@ html { scroll-padding-top: 110px; }
   .rc-share__btns { flex-direction: column; }
   .rc-share__btns > * { width: 100%; }
 }
+
+/* Share your stamp */
+.rc-share .c51-btn--dark { gap: 8px; text-transform: none; letter-spacing: 0; }
+.share { max-width: 460px; }
+.share__box { gap: 14px; }
+.share__title { font-size: 28px; }
+.share__seg { align-self: center; }
+.share__preview { display: grid; place-items: center; }
+.share__preview img { display: block; max-width: 100%; max-height: 52vh; border-radius: 12px; }
+.share__preview.is-square img, .share__preview.is-square .share__sk { width: 340px; aspect-ratio: 1; }
+.share__preview.is-story img, .share__preview.is-story .share__sk { height: min(52vh, 480px); aspect-ratio: 9 / 16; }
+.share__sk { max-width: 100%; border-radius: 12px; }
+.share .c51-btn { gap: 8px; text-transform: none; letter-spacing: 0; }
+.share [data-copy].is-done { background: #e5f4e4; color: #1d6b34; }
+.share__note { margin: 0; text-align: center; font-size: 13px; line-height: 18px; color: var(--text-secondary); }
+.share__text { margin: 0; padding: 12px 14px; border-radius: 10px; background: var(--ivory); border: 1px solid var(--divider); font: 13px/19px ui-monospace, Menlo, monospace; color: #3b4340; white-space: pre-wrap; overflow-wrap: anywhere; }
+@media (max-width: 560px) { .share__preview.is-square img, .share__preview.is-square .share__sk { width: 100%; } }
+.share__box { display: flex; flex-direction: column; }
+.share__box .c51-dialog__head { margin-bottom: 0; }
