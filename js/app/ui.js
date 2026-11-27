@@ -88,3 +88,8 @@ export function wireTime(input) {
     input.value = rest.length <= 2 ? `${rest}:${s}` : `${rest.slice(0, -2)}:${rest.slice(-2)}:${s}`;
   });
 }
+
+// Link to the Cyprus 5+1 club on Strava. "Strava" in Strava orange and bold, as their guidelines ask
+// for links to Strava; an official Strava logo file can replace the word later.
+export const stravaLink = (url, label = 'club', cls = '') =>
+  `<a class="strava-link ${cls}" href="${url}" target="_blank" rel="noopener"><span>Join the</span> <b class="strava-word">Strava</b> <span>${label}</span>${icon('ext', 14)}</a>`;

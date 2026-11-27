@@ -1,6 +1,7 @@
 // Passport — follows the PassportDesktop / PassportMobile / PassportEmpty designs.
 import { appShell } from '../layout.js';
-import { esc, icon } from '../ui.js';
+import { esc, icon, stravaLink } from '../ui.js';
+import { STRAVA_CLUB_URL } from '../../config.js';
 import { raceDate, formatRaceDate, daysUntil, checkInOpen, seasonEnd, stampImg, course, profilePath, fmtTime, asset } from '../data.js';
 import { loadSeason, HALF_KM, SUB130, badgeImg } from '../model.js';
 import { openAbroad, planCourse } from '../abroad.js';
@@ -226,7 +227,7 @@ export async function passport(root, { state, flash }) {
       <p class="ps-com__lead">${c === null ? 'Runner numbers are not available right now. Try again a bit later.' : 'Runner numbers appear here once people start collecting stamps.'}</p>
       <div class="ps-com__empty" aria-hidden="true">${[0, 1, 2, 3, 4, 5, 6].map((k) => `<div><div></div><span>${k}</span></div>`).join('')}</div>
       <p class="ps-com__note">Runners by number of stamps, 0–6 · anonymous</p>
-      <button type="button" class="c51-btn c51-btn--secondary c51-btn--block" data-invite>Invite a friend</button>
+      <div class="ps-com__btns"><button type="button" class="c51-btn c51-btn--secondary" data-invite>Invite a friend</button>${stravaLink(STRAVA_CLUB_URL, 'club', 'c51-btn c51-btn--secondary')}</div>
     </section>`;
   if (c && c.runners) {
     const mine = Math.min(c.my_stamps ?? nV, 6);
@@ -242,7 +243,7 @@ export async function passport(root, { state, flash }) {
         ${c.dist.map((n, k) => `<div>${k === mine ? '<span class="ps-com__you">YOU</span>' : ''}<div style="height:${Math.max(4, (n / maxN) * 100)}%;background:${k === mine ? '#ff633e' : '#d3d5cf'}"></div><span>${k}</span></div>`).join('')}
       </div>
       <p class="ps-com__note">Runners by number of stamps, 0–6 · anonymous</p>
-      <button type="button" class="c51-btn c51-btn--secondary c51-btn--block" data-invite>Invite a friend</button>
+      <div class="ps-com__btns"><button type="button" class="c51-btn c51-btn--secondary" data-invite>Invite a friend</button>${stravaLink(STRAVA_CLUB_URL, 'club', 'c51-btn c51-btn--secondary')}</div>
     </section>`;
   }
 

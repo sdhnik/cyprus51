@@ -2,7 +2,7 @@
 // Designs: RaceDesktop/Mobile, RaceDone*, RaceDayDesktop, CheckIn, Submit*, SubmitStates, PhotoEmpty.
 import { sb } from '../supa.js';
 import { appShell } from '../layout.js';
-import { esc, icon, field, setError, banner, busy, wireTime } from '../ui.js';
+import { esc, icon, field, setError, banner, busy, wireTime, stravaLink } from '../ui.js';
 import { raceDate, formatRaceDate, daysUntil, stampImg, course, fmtTime, parseTime, asset } from '../data.js';
 import { loadSeason, HALF_KM, SUB130, badgeImg } from '../model.js';
 import { planCourse, openAbroad } from '../abroad.js';
@@ -12,7 +12,7 @@ import { routeMap } from '../map.js';
 import { compressPhoto, photoError, uploadPhoto, photoUrl, removePhoto, toDataUrl } from '../photo.js';
 import { enqueue, queued, isOffline, flush } from '../outbox.js';
 import { go, render } from '../router.js';
-import { SEASON } from '../../config.js';
+import { SEASON, STRAVA_CLUB_URL } from '../../config.js';
 
 const DAY = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
 const DAY_Y = new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
@@ -163,7 +163,7 @@ export async function race(root, { state, args, flash }) {
   });
   if (showCheckIn) wireCheckIn(root, x);
   if (!verified) wireTarget(root, m);
-  else { wirePhoto(root, x); drawStats(root, x); }
+  else { wirePhoto(root, x); drawStats(root, x); wireShare(root, x); }
 
   // Course drawing
   cData.then((c) => {
@@ -264,6 +264,10 @@ function doneCard(x) {
       <div><p class="lbl">Bib</p><p class="num rc-fact">${esc(sub.bib || '—')}</p><p class="rc-note">${sub.bib ? 'Checked against results' : 'Not given'}</p></div>
     </div>
     <div class="rc-sec" data-stats hidden></div>
+    <div class="rc-sec rc-share">
+      <div><p class="lbl">Share on Strava</p><p class="rc-note" data-share-note>Copy a line for your Strava activity description.</p></div>
+      <div class="rc-share__btns"><button type="button" class="c51-btn c51-btn--secondary" data-copy-strava>Copy for Strava</button>${stravaLink(STRAVA_CLUB_URL, 'club', 'c51-btn c51-btn--secondary')}</div>
+    </div>
     <p class="rc-meta">${sub.submitted_at ? `<span>Submitted ${day(sub.submitted_at)}</span>` : ''}${sub.reviewed_at ? `<span>Verified ${day(sub.reviewed_at)}</span>` : ''}${sub.result_url ? `<a href="${esc(sub.result_url)}" target="_blank" rel="noopener">Official results ${icon('ext', 14)}</a>` : ''}</p>
   </section>`;
 }
@@ -576,4 +580,20 @@ function thanks(root, x, row, editing) {
   root.querySelectorAll('.rc-steps li')[1]?.classList.add('is-on');
   root.querySelector('.rc-thanks').focus();
   window.scrollTo(0, 0);
+}
+
+// "Copy for Strava": one line for the activity description (ShareStamp design).
+function wireShare(root, x) {
+  const btn = root.querySelector('[data-copy-strava]');
+  if (!btn) return;
+  const { m, sub, r } = x;
+  const isPb = m.pb && m.pb.r.id === r.id;
+  const place = x.abroad ? 'International' : r.city;
+  const text = `🟠 Cyprus 5+1 · ${place} stamp collected · ${m.nV} of 6 · ${isPb ? 'PB ' : ''}${fmtTime(sub.official_time_s)}\nSix finish lines, one passport → ${STRAVA_CLUB_URL.replace(/^https:\/\/(www\.)?/, '')}`;
+  btn.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(text); } catch { return; }
+    btn.innerHTML = `${icon('check', 16)}Copied`;
+    root.querySelector('[data-share-note]').textContent = 'Copied. Paste it into your Strava activity.';
+    setTimeout(() => { btn.textContent = 'Copy for Strava'; }, 2400);
+  });
 }
