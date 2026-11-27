@@ -318,7 +318,7 @@ h1:focus { outline: none; }
 
 /* Account */
 .acc { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 32px; align-items: start; }
-.acc__nav { position: sticky; top: 24px; display: flex; flex-direction: column; gap: 4px; }
+.acc__nav { position: sticky; top: 110px; display: flex; flex-direction: column; gap: 4px; }
 .acc__nav a, .acc__nav button { display: flex; align-items: center; min-height: 44px; padding: 0 14px; border-radius: 8px; border: 1px solid transparent; background: transparent; font: 500 15px var(--font-sans); color: var(--ink); text-decoration: none; text-align: left; cursor: pointer; }
 .acc__nav [aria-current="true"] { background: var(--white); border-color: var(--divider); font-weight: 700; }
 .acc__nav .is-danger { color: var(--error); }
@@ -516,4 +516,4 @@ h1:focus { outline: none; }
 .app__head::after { content: ""; position: absolute; z-index: -1; top: -6px; left: 50%; width: 100vw; height: 6px; transform: translateX(-50%); background: var(--orange-500); }
 .app__head::before { content: ""; position: absolute; z-index: -1; top: 0; bottom: 0; left: 50%; width: 100vw; transform: translateX(-50%); background: var(--ivory); border-bottom: 1px solid transparent; transition: border-color .2s; }
 .app__head.is-stuck::before { border-bottom-color: rgba(13,20,18,.08); }
-html { scroll-padding-top: 96px; }
+html { scroll-padding-top: 110px; }
