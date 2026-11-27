@@ -4,6 +4,8 @@ import { esc, icon } from '../ui.js';
 import { raceDate, formatRaceDate, daysUntil, checkInOpen, seasonEnd, stampImg, course, profilePath, fmtTime, asset } from '../data.js';
 import { loadSeason, HALF_KM, SUB130, badgeImg } from '../model.js';
 import { openAbroad } from '../abroad.js';
+
+let focusAbroad = false;
 import { render } from '../router.js';
 
 const dayShort = (iso) => new Intl.DateTimeFormat('en-GB', { weekday: 'short', day: 'numeric', month: 'short' }).format(new Date(iso + 'T00:00:00')).replace(',', '');
@@ -213,6 +215,13 @@ export async function passport(root, { state, flash }) {
     ${season}
     <div class="ps-row">${results}${community}</div>
     ${awards}`);
+  // Random order on every visit; after saving a race abroad, open on that tip.
+  for (let k = CH.length - 1; k > 0; k--) { const j = Math.floor(Math.random() * (k + 1)); [CH[k], CH[j]] = [CH[j], CH[k]]; }
+  if (focusAbroad) {
+    const k = CH.findIndex((c) => c.kind === 'Race abroad');
+    if (k > 0) CH.unshift(...CH.splice(k, 1));
+    focusAbroad = false;
+  }
 
   // Challenge carousel: every slide sits in the same grid cell, so the card keeps
   // the height of the tallest one and nothing jumps when switching.
@@ -244,7 +253,7 @@ export async function passport(root, { state, flash }) {
   }
 
   // Race abroad dialog
-  root.querySelectorAll('[data-abroad]').forEach((b) => b.addEventListener('click', () => openAbroad(plan, () => render())));
+  root.querySelectorAll('[data-abroad]').forEach((b) => b.addEventListener('click', () => openAbroad(plan, () => { focusAbroad = true; render(); })));
 
   // Invite a friend
   root.querySelector('[data-invite]')?.addEventListener('click', async (e) => {
